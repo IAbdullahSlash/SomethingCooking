@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Brain,
   CheckCircle,
@@ -33,6 +32,10 @@ interface AnalysisData {
   successProbability: number
   keyStrengths: string[]
   potentialChallenges: string[]
+  // New fields that AI will determine automatically
+  detectedDomain: string
+  requiredExperience: string
+  estimatedTimeline: string
   techStack: {
     frontend: string[]
     backend: string[]
@@ -48,7 +51,6 @@ interface AnalysisData {
   similarProjects: string[]
   projectTitle?: string
   projectDescription?: string
-  projectDomain?: string
 }
 
 interface GitHubRepo {
@@ -78,17 +80,11 @@ export default function AnalysisPage() {
   const [projectModifications, setProjectModifications] = useState({
     title: "",
     description: "",
-    domain: "",
-    timeline: "",
-    experience: "",
   })
 
-  // New state for the idea input form
+  // Simplified form data - only idea description needed
   const [formData, setFormData] = useState({
-    idea: "",
-    experience: "intermediate",
-    timeline: "2-3 months",
-    domain: "Web Development"
+    idea: ""
   })
   const [analyzing, setAnalyzing] = useState(false)
 
@@ -112,7 +108,7 @@ export default function AnalysisPage() {
     }
   }
 
-  // New function to handle form submission and generate analysis
+  // Updated function to handle form submission with only idea description
   const handleAnalyzeIdea = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     
@@ -124,7 +120,7 @@ export default function AnalysisPage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ idea: formData.idea }),
       })
 
       console.log("[Analysis] API response status:", response.status)
@@ -137,7 +133,6 @@ export default function AnalysisPage() {
           ...analysisData,
           projectTitle: `Project: ${formData.idea.substring(0, 50)}${formData.idea.length > 50 ? "..." : ""}`,
           projectDescription: formData.idea,
-          projectDomain: formData.domain,
         }
 
         setAnalysis(enhancedAnalysis)
@@ -146,9 +141,6 @@ export default function AnalysisPage() {
         setProjectModifications({
           title: enhancedAnalysis.projectTitle || "",
           description: enhancedAnalysis.projectDescription || "",
-          domain: enhancedAnalysis.projectDomain || "",
-          timeline: formData.timeline,
-          experience: formData.experience,
         })
         
         fetchGitHubRepos(formData.idea)
@@ -175,9 +167,6 @@ export default function AnalysisPage() {
         setProjectModifications({
           title: parsedAnalysis.projectTitle || "",
           description: parsedAnalysis.projectDescription || "",
-          domain: parsedAnalysis.projectDomain || "",
-          timeline: "",
-          experience: "",
         })
         if (parsedAnalysis.projectTitle) {
           fetchGitHubRepos(parsedAnalysis.projectTitle)
@@ -263,9 +252,6 @@ export default function AnalysisPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea: `${projectModifications.title}: ${projectModifications.description}`,
-          experience: projectModifications.experience,
-          timeline: projectModifications.timeline,
-          domain: projectModifications.domain,
         }),
       })
 
@@ -275,7 +261,6 @@ export default function AnalysisPage() {
           ...newAnalysis,
           projectTitle: projectModifications.title,
           projectDescription: projectModifications.description,
-          projectDomain: projectModifications.domain,
         }
 
         setAnalysis(updatedAnalysis)
@@ -379,12 +364,15 @@ export default function AnalysisPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-8">
           
-          {/* Idea Input Section */}
+          {/* Simplified Idea Input Section */}
           <Card className="shadow-2xl border-2">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-2xl">Analyze Your Project Idea</CardTitle>
               <CardDescription>
-                {analysis ? "Analyze a new project idea or modify your current one" : "Describe your project concept and get instant AI analysis"}
+                {analysis 
+                  ? "Analyze a new project idea or modify your current one" 
+                  : "Describe your project concept - our AI will automatically assess difficulty, timeline, and tech requirements"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -393,74 +381,14 @@ export default function AnalysisPage() {
                   <Label htmlFor="project-idea">Project Idea</Label>
                   <Textarea
                     id="project-idea"
-                    placeholder="Describe your project idea here... (e.g., A mobile app that helps students find study groups, An AI-powered code review tool, A blockchain-based voting system)"
-                    className="min-h-24 text-base"
+                    placeholder="Describe your project idea in detail... (e.g., A mobile app that helps students find study groups with location-based matching and real-time chat features, An AI-powered code review tool that integrates with GitHub and provides suggestions for optimization, A blockchain-based voting system for university elections with enhanced security)"
+                    className="min-h-32 text-base"
                     value={formData.idea}
                     onChange={(e) => setFormData(prev => ({ ...prev, idea: e.target.value }))}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">Experience Level</Label>
-                    <Select
-                      value={formData.experience}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, experience: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="beginner">Beginner (0-1 years)</SelectItem>
-                        <SelectItem value="intermediate">Intermediate (1-3 years)</SelectItem>
-                        <SelectItem value="advanced">Advanced (3+ years)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="timeline">Timeline</Label>
-                    <Select
-                      value={formData.timeline}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, timeline: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-2 weeks">1-2 weeks</SelectItem>
-                        <SelectItem value="1 month">1 month</SelectItem>
-                        <SelectItem value="2-3 months">2-3 months</SelectItem>
-                        <SelectItem value="6 months">6 months</SelectItem>
-                        <SelectItem value="1 year+">1 year+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="domain">Domain</Label>
-                    <Select
-                      value={formData.domain}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, domain: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Web Development">Web Development</SelectItem>
-                        <SelectItem value="Mobile App Development">Mobile App Development</SelectItem>
-                        <SelectItem value="Machine Learning/AI">Machine Learning/AI</SelectItem>
-                        <SelectItem value="Data Science">Data Science</SelectItem>
-                        <SelectItem value="Game Development">Game Development</SelectItem>
-                        <SelectItem value="Blockchain/Crypto">Blockchain/Crypto</SelectItem>
-                        <SelectItem value="IoT/Hardware">IoT/Hardware</SelectItem>
-                        <SelectItem value="Cybersecurity">Cybersecurity</SelectItem>
-                        <SelectItem value="DevOps/Cloud">DevOps/Cloud</SelectItem>
-                        <SelectItem value="Desktop Applications">Desktop Applications</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    💡 Tip: Be specific about features, target users, and any technical requirements for better analysis
+                  </p>
                 </div>
 
                 <Button
@@ -472,7 +400,7 @@ export default function AnalysisPage() {
                   {analyzing ? (
                     <>
                       <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                      Analyzing...
+                      Analyzing Your Idea...
                     </>
                   ) : (
                     <>
@@ -485,26 +413,34 @@ export default function AnalysisPage() {
             </CardContent>
           </Card>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Generating analysis...</p>
-            </div>
-          )}
-
           {/* Analysis Results */}
           {analysis && (
             <>
-              {/* Project Overview */}
+              {/* Project Overview with AI Assessments */}
               <Card className="border-2">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="text-2xl">{analysis.projectTitle || "Your Project"}</CardTitle>
                       <CardDescription className="text-lg mt-2">
                         {analysis.projectDescription || "AI-powered project analysis"}
                       </CardDescription>
+                      
+                      {/* AI-Detected Project Attributes */}
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Badge variant="outline" className="text-sm">
+                          <Code className="w-3 h-3 mr-1" />
+                          {analysis.detectedDomain}
+                        </Badge>
+                        <Badge variant="outline" className="text-sm">
+                          <Brain className="w-3 h-3 mr-1" />
+                          {analysis.requiredExperience} Level
+                        </Badge>
+                        <Badge variant="outline" className="text-sm">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {analysis.estimatedTimeline}
+                        </Badge>
+                      </div>
                     </div>
                     <Badge {...getFeasibilityBadge(analysis.feasibilityScore)} className="text-lg px-4 py-2">
                       {getFeasibilityBadge(analysis.feasibilityScore).text}
@@ -513,8 +449,6 @@ export default function AnalysisPage() {
                 </CardHeader>
               </Card>
 
-              {/* Rest of the existing components remain the same... */}
-              
               {/* Project Refinement Tools Section */}
               {showRefinementTools && (
                 <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-purple-500/20">
@@ -564,49 +498,22 @@ export default function AnalysisPage() {
                       )}
                     </div>
 
-                    {/* Project Modification Form */}
+                    {/* Simplified Project Modification Form */}
                     <div className="space-y-4">
                       <h4 className="font-semibold flex items-center gap-2">
                         <Edit3 className="w-5 h-5 text-purple-500" />
                         Modify Project Details
                       </h4>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="refine-title">Project Title</Label>
-                          <input
-                            id="refine-title"
-                            className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                            value={projectModifications.title}
-                            onChange={(e) => setProjectModifications((prev) => ({ ...prev, title: e.target.value }))}
-                            placeholder="Updated project title"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="refine-domain">Domain</Label>
-                          <Select
-                            value={projectModifications.domain}
-                            onValueChange={(value) => setProjectModifications((prev) => ({ ...prev, domain: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select domain" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Web Development">Web Development</SelectItem>
-                              <SelectItem value="Mobile App Development">Mobile App Development</SelectItem>
-                              <SelectItem value="Machine Learning/AI">Machine Learning/AI</SelectItem>
-                              <SelectItem value="Data Science">Data Science</SelectItem>
-                              <SelectItem value="Game Development">Game Development</SelectItem>
-                              <SelectItem value="Blockchain/Crypto">Blockchain/Crypto</SelectItem>
-                              <SelectItem value="IoT/Hardware">IoT/Hardware</SelectItem>
-                              <SelectItem value="Cybersecurity">Cybersecurity</SelectItem>
-                              <SelectItem value="DevOps/Cloud">DevOps/Cloud</SelectItem>
-                              <SelectItem value="Desktop Applications">Desktop Applications</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="refine-title">Project Title</Label>
+                        <input
+                          id="refine-title"
+                          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                          value={projectModifications.title}
+                          onChange={(e) => setProjectModifications((prev) => ({ ...prev, title: e.target.value }))}
+                          placeholder="Updated project title"
+                        />
                       </div>
 
                       <div className="space-y-2">
@@ -616,47 +523,9 @@ export default function AnalysisPage() {
                           value={projectModifications.description}
                           onChange={(e) => setProjectModifications((prev) => ({ ...prev, description: e.target.value }))}
                           placeholder="Updated project description with improvements..."
-                          rows={3}
+                          rows={4}
                           className="resize-none"
                         />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="refine-timeline">Timeline</Label>
-                          <Select
-                            value={projectModifications.timeline}
-                            onValueChange={(value) => setProjectModifications((prev) => ({ ...prev, timeline: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select timeline" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1-2 weeks">1-2 weeks</SelectItem>
-                              <SelectItem value="1 month">1 month</SelectItem>
-                              <SelectItem value="2-3 months">2-3 months</SelectItem>
-                              <SelectItem value="6 months">6 months</SelectItem>
-                              <SelectItem value="1 year+">1 year+</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="refine-experience">Experience Level</Label>
-                          <Select
-                            value={projectModifications.experience}
-                            onValueChange={(value) => setProjectModifications((prev) => ({ ...prev, experience: value }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="beginner">Beginner (0-1 years)</SelectItem>
-                              <SelectItem value="intermediate">Intermediate (1-3 years)</SelectItem>
-                              <SelectItem value="advanced">Advanced (3+ years)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
                       </div>
 
                       <div className="flex gap-3 pt-4">
@@ -914,15 +783,24 @@ export default function AnalysisPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Overall Progress */}
+                  <div className="bg-muted/30 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">Overall Progress</h4>
+                      <span className="text-sm font-medium">{Math.round(getOverallProgress())}%</span>
+                    </div>
+                    <Progress value={getOverallProgress()} className="h-3" />
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Implemented/Similar Solutions */}
+              {/* GitHub Repositories */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Code className="w-6 h-6 text-blue-500" />
-                    Implemented/Similar Solutions
+                    Similar Projects & Repositories
                   </CardTitle>
                   <CardDescription>Explore existing GitHub repositories related to your project idea</CardDescription>
                 </CardHeader>
@@ -968,6 +846,28 @@ export default function AnalysisPage() {
                 </CardContent>
               </Card>
 
+              {/* Recommendations */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="w-6 h-6 text-yellow-500" />
+                    AI Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {analysis.recommendations.map((recommendation, index) => (
+                      <li key={index} className="flex items-start gap-3 text-sm">
+                        <div className="w-6 h-6 bg-yellow-500/10 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          <span className="text-yellow-600 font-semibold text-xs">{index + 1}</span>
+                        </div>
+                        {recommendation}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
               {/* Similar Projects */}
               {analysis.similarProjects.length > 0 && (
                 <Card>
@@ -1008,7 +908,7 @@ export default function AnalysisPage() {
                 <Brain className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <CardTitle className="mb-2">Ready to Analyze Your Project Idea</CardTitle>
                 <CardDescription>
-                  Fill out the form above to get started with AI-powered project analysis
+                  Our AI will automatically assess difficulty, timeline, domain, and provide tailored recommendations
                 </CardDescription>
               </CardContent>
             </Card>
