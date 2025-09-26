@@ -1,0 +1,4 @@
+# ideas could be implemented in the project 
+
+- Relational database SQL quesries genration for schema genertion and the structure
+- 
