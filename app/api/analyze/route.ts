@@ -118,8 +118,7 @@ Be conservative with all estimates. Return only the JSON object above with no ad
     const { text } = await generateText({
       model: groq("llama-3.1-8b-instant"),
       prompt: enhancedPrompt,
-      temperature: 0.2,
-      maxTokens: 2500, // ✅ Added maxTokens
+      temperature: 0.2 // ✅ Added maxTokens
     })
 
     console.log("[DEBUG] Raw AI response:", text.substring(0, 200) + "...")
@@ -130,7 +129,7 @@ Be conservative with all estimates. Return only the JSON object above with no ad
       // Try to parse the full response first
       analysis = JSON.parse(text.trim())
     } catch (parseError) {
-      console.log("[DEBUG] Direct parsing failed, attempting JSON extraction...")
+      console.log("[DEBUG] Direcnpt parsing failed, attempting JSON extraction...")
       
       // Extract JSON from the response more aggressively
       const jsonStart = text.indexOf('{')
