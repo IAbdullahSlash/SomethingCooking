@@ -77,8 +77,8 @@ IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text bef
     "Market potential"
   ],
   "potentialChallenges": [
-    "Realistic technical hurdles",
-    "Resource/time constraints",
+    "possible technical hurdles",
+    "client/user usability issues",
     "Market/adoption challenges"
   ],
   "techStack": {
