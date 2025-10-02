@@ -51,6 +51,14 @@ interface AnalysisData {
   similarProjects: string[]
   projectTitle?: string
   projectDescription?: string
+  contextAdjustment?: {
+    multiplier: string
+    reason: string
+  }
+  validationApplied?: {
+    adjustments: string
+    confidence: string
+  }
 }
 
 interface GitHubRepo {
@@ -87,6 +95,52 @@ export default function AnalysisPage() {
     idea: ""
   })
   const [analyzing, setAnalyzing] = useState(false)
+
+  // 🔧 ALTERNATIVE QUICK FIX - Data Validation Helper
+  const validateAnalysisData = (analysisData: any): AnalysisData => {
+    // Add this safety check at the top of your component
+    if (analysisData && (
+      !analysisData.keyStrengths || 
+      !analysisData.potentialChallenges || 
+      !analysisData.techStack || 
+      !analysisData.roadmap ||
+      !analysisData.recommendations ||
+      !analysisData.similarProjects
+    )) {
+      console.warn("Analysis data incomplete, some fields may be missing - applying fallbacks")
+    }
+
+    return {
+      ...analysisData,
+      keyStrengths: analysisData.keyStrengths || [],
+      potentialChallenges: analysisData.potentialChallenges || [],
+      recommendations: analysisData.recommendations || [],
+      similarProjects: analysisData.similarProjects || [],
+      techStack: {
+        frontend: analysisData.techStack?.frontend || [],
+        backend: analysisData.techStack?.backend || [],
+        database: analysisData.techStack?.database || [],
+        tools: analysisData.techStack?.tools || []
+      },
+      roadmap: {
+        phase1: {
+          title: analysisData.roadmap?.phase1?.title || "Phase 1",
+          duration: analysisData.roadmap?.phase1?.duration || "TBD",
+          tasks: analysisData.roadmap?.phase1?.tasks || []
+        },
+        phase2: {
+          title: analysisData.roadmap?.phase2?.title || "Phase 2", 
+          duration: analysisData.roadmap?.phase2?.duration || "TBD",
+          tasks: analysisData.roadmap?.phase2?.tasks || []
+        },
+        phase3: {
+          title: analysisData.roadmap?.phase3?.title || "Phase 3",
+          duration: analysisData.roadmap?.phase3?.duration || "TBD", 
+          tasks: analysisData.roadmap?.phase3?.tasks || []
+        }
+      }
+    }
+  }
 
   const fetchGitHubRepos = async (searchQuery: string) => {
     setGithubLoading(true)
@@ -126,11 +180,14 @@ export default function AnalysisPage() {
       console.log("[Analysis] API response status:", response.status)
 
       if (response.ok) {
-        const analysisData = await response.json()
+        const rawAnalysisData = await response.json()
         console.log("[Analysis] Analysis data received successfully")
         
+        // 🔧 Apply validation and fallbacks
+        const validatedAnalysisData = validateAnalysisData(rawAnalysisData)
+        
         const enhancedAnalysis = {
-          ...analysisData,
+          ...validatedAnalysisData,
           projectTitle: `Project: ${formData.idea.substring(0, 50)}${formData.idea.length > 50 ? "..." : ""}`,
           projectDescription: formData.idea,
         }
@@ -163,13 +220,15 @@ export default function AnalysisPage() {
       const storedAnalysis = localStorage.getItem("projectAnalysis")
       if (storedAnalysis) {
         const parsedAnalysis = JSON.parse(storedAnalysis)
-        setAnalysis(parsedAnalysis)
+        // 🔧 Apply validation to cached data too
+        const validatedAnalysis = validateAnalysisData(parsedAnalysis)
+        setAnalysis(validatedAnalysis)
         setProjectModifications({
-          title: parsedAnalysis.projectTitle || "",
-          description: parsedAnalysis.projectDescription || "",
+          title: validatedAnalysis.projectTitle || "",
+          description: validatedAnalysis.projectDescription || "",
         })
-        if (parsedAnalysis.projectTitle) {
-          fetchGitHubRepos(parsedAnalysis.projectTitle)
+        if (validatedAnalysis.projectTitle) {
+          fetchGitHubRepos(validatedAnalysis.projectTitle)
         }
       }
 
@@ -256,9 +315,12 @@ export default function AnalysisPage() {
       })
 
       if (response.ok) {
-        const newAnalysis = await response.json()
+        const rawNewAnalysis = await response.json()
+        // 🔧 Apply validation to re-analyzed data
+        const validatedNewAnalysis = validateAnalysisData(rawNewAnalysis)
+        
         const updatedAnalysis = {
-          ...newAnalysis,
+          ...validatedNewAnalysis,
           projectTitle: projectModifications.title,
           projectDescription: projectModifications.description,
         }
@@ -281,21 +343,27 @@ export default function AnalysisPage() {
     localStorage.setItem("taskProgress", JSON.stringify(newProgress))
   }
 
+  // 🔧 PROTECTED HELPER FUNCTIONS
   const getPhaseProgress = (phaseTasks: string[], phaseKey: string) => {
+    if (!phaseTasks || phaseTasks.length === 0) return 0
     const completedTasks = phaseTasks.filter((_, index) => taskProgress[`${phaseKey}-${index}`]).length
     return (completedTasks / phaseTasks.length) * 100
   }
 
   const getOverallProgress = () => {
-    if (!analysis) return 0
-    const allTasks = [
-      ...analysis.roadmap.phase1.tasks,
-      ...analysis.roadmap.phase2.tasks,
-      ...analysis.roadmap.phase3.tasks,
-    ]
+    if (!analysis || !analysis.roadmap) return 0
+    
+    const phase1Tasks = analysis.roadmap.phase1?.tasks || []
+    const phase2Tasks = analysis.roadmap.phase2?.tasks || []
+    const phase3Tasks = analysis.roadmap.phase3?.tasks || []
+    
+    const allTasks = [...phase1Tasks, ...phase2Tasks, ...phase3Tasks]
+    
+    if (allTasks.length === 0) return 0
+    
     const completedTasks = allTasks.filter((_, globalIndex) => {
-      const phase1Length = analysis.roadmap.phase1.tasks.length
-      const phase2Length = analysis.roadmap.phase2.tasks.length
+      const phase1Length = phase1Tasks.length
+      const phase2Length = phase2Tasks.length
 
       if (globalIndex < phase1Length) {
         return taskProgress[`phase1-${globalIndex}`]
@@ -305,6 +373,7 @@ export default function AnalysisPage() {
         return taskProgress[`phase3-${globalIndex - phase1Length - phase2Length}`]
       }
     }).length
+    
     return (completedTasks / allTasks.length) * 100
   }
 
@@ -430,15 +499,15 @@ export default function AnalysisPage() {
                       <div className="flex flex-wrap gap-2 mt-4">
                         <Badge variant="outline" className="text-sm">
                           <Code className="w-3 h-3 mr-1" />
-                          {analysis.detectedDomain}
+                          {analysis.detectedDomain || "Web Development"}
                         </Badge>
                         <Badge variant="outline" className="text-sm">
                           <Brain className="w-3 h-3 mr-1" />
-                          {analysis.requiredExperience} Level
+                          {analysis.requiredExperience || "Intermediate"} Level
                         </Badge>
                         <Badge variant="outline" className="text-sm">
                           <Calendar className="w-3 h-3 mr-1" />
-                          {analysis.estimatedTimeline}
+                          {analysis.estimatedTimeline || analysis.estimatedTimeframe || "2-4 months"}
                         </Badge>
                       </div>
                     </div>
@@ -580,7 +649,8 @@ export default function AnalysisPage() {
                     <div>
                       <h4 className="font-semibold mb-2 text-green-500">Key Strengths</h4>
                       <ul className="space-y-1">
-                        {analysis.keyStrengths.map((strength, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.keyStrengths || []).map((strength, index) => (
                           <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                             {strength}
@@ -592,7 +662,8 @@ export default function AnalysisPage() {
                     <div>
                       <h4 className="font-semibold mb-2 text-yellow-500">Potential Challenges</h4>
                       <ul className="space-y-1">
-                        {analysis.potentialChallenges.map((challenge, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.potentialChallenges || []).map((challenge, index) => (
                           <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
                             <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                             {challenge}
@@ -617,7 +688,8 @@ export default function AnalysisPage() {
                     <div>
                       <h4 className="font-semibold mb-3">Frontend</h4>
                       <div className="flex flex-wrap gap-2">
-                        {analysis.techStack.frontend.map((tech, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.techStack?.frontend || []).map((tech, index) => (
                           <Badge key={index} variant="outline">
                             {tech}
                           </Badge>
@@ -627,7 +699,8 @@ export default function AnalysisPage() {
                     <div>
                       <h4 className="font-semibold mb-3">Backend</h4>
                       <div className="flex flex-wrap gap-2">
-                        {analysis.techStack.backend.map((tech, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.techStack?.backend || []).map((tech, index) => (
                           <Badge key={index} variant="outline">
                             {tech}
                           </Badge>
@@ -637,7 +710,8 @@ export default function AnalysisPage() {
                     <div>
                       <h4 className="font-semibold mb-3">Database</h4>
                       <div className="flex flex-wrap gap-2">
-                        {analysis.techStack.database.map((tech, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.techStack?.database || []).map((tech, index) => (
                           <Badge key={index} variant="outline">
                             {tech}
                           </Badge>
@@ -647,7 +721,8 @@ export default function AnalysisPage() {
                     <div>
                       <h4 className="font-semibold mb-3">Tools & Services</h4>
                       <div className="flex flex-wrap gap-2">
-                        {analysis.techStack.tools.map((tool, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.techStack?.tools || []).map((tool, index) => (
                           <Badge key={index} variant="outline">
                             {tool}
                           </Badge>
@@ -673,20 +748,21 @@ export default function AnalysisPage() {
                     <div className="border-l-4 border-blue-500 pl-4 bg-blue-500/5 p-4 rounded-r-lg">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-blue-500">
-                          {analysis.roadmap.phase1.title} ({analysis.roadmap.phase1.duration})
+                          {analysis.roadmap?.phase1?.title || "Phase 1"} ({analysis.roadmap?.phase1?.duration || "TBD"})
                         </h4>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            {Math.round(getPhaseProgress(analysis.roadmap.phase1.tasks, "phase1"))}%
+                            {Math.round(getPhaseProgress(analysis.roadmap?.phase1?.tasks || [], "phase1"))}%
                           </span>
                           <Progress
-                            value={getPhaseProgress(analysis.roadmap.phase1.tasks, "phase1")}
+                            value={getPhaseProgress(analysis.roadmap?.phase1?.tasks || [], "phase1")}
                             className="w-20 h-2"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {analysis.roadmap.phase1.tasks.map((task, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.roadmap?.phase1?.tasks || []).map((task, index) => (
                           <div key={index} className="flex items-start gap-3">
                             <Checkbox
                               id={`phase1-${index}`}
@@ -711,20 +787,21 @@ export default function AnalysisPage() {
                     <div className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-yellow-500">
-                          {analysis.roadmap.phase2.title} ({analysis.roadmap.phase2.duration})
+                          {analysis.roadmap?.phase2?.title || "Phase 2"} ({analysis.roadmap?.phase2?.duration || "TBD"})
                         </h4>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            {Math.round(getPhaseProgress(analysis.roadmap.phase2.tasks, "phase2"))}%
+                            {Math.round(getPhaseProgress(analysis.roadmap?.phase2?.tasks || [], "phase2"))}%
                           </span>
                           <Progress
-                            value={getPhaseProgress(analysis.roadmap.phase2.tasks, "phase2")}
+                            value={getPhaseProgress(analysis.roadmap?.phase2?.tasks || [], "phase2")}
                             className="w-20 h-2"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {analysis.roadmap.phase2.tasks.map((task, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.roadmap?.phase2?.tasks || []).map((task, index) => (
                           <div key={index} className="flex items-start gap-3">
                             <Checkbox
                               id={`phase2-${index}`}
@@ -749,20 +826,21 @@ export default function AnalysisPage() {
                     <div className="border-l-4 border-green-500 pl-4 bg-green-500/5 p-4 rounded-r-lg">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-green-500">
-                          {analysis.roadmap.phase3.title} ({analysis.roadmap.phase3.duration})
+                          {analysis.roadmap?.phase3?.title || "Phase 3"} ({analysis.roadmap?.phase3?.duration || "TBD"})
                         </h4>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            {Math.round(getPhaseProgress(analysis.roadmap.phase3.tasks, "phase3"))}%
+                            {Math.round(getPhaseProgress(analysis.roadmap?.phase3?.tasks || [], "phase3"))}%
                           </span>
                           <Progress
-                            value={getPhaseProgress(analysis.roadmap.phase3.tasks, "phase3")}
+                            value={getPhaseProgress(analysis.roadmap?.phase3?.tasks || [], "phase3")}
                             className="w-20 h-2"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {analysis.roadmap.phase3.tasks.map((task, index) => (
+                        {/* 🔧 PROTECTED MAP OPERATION */}
+                        {(analysis.roadmap?.phase3?.tasks || []).map((task, index) => (
                           <div key={index} className="flex items-start gap-3">
                             <Checkbox
                               id={`phase3-${index}`}
@@ -856,7 +934,8 @@ export default function AnalysisPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {analysis.recommendations.map((recommendation, index) => (
+                    {/* 🔧 PROTECTED MAP OPERATION */}
+                    {(analysis.recommendations || []).map((recommendation, index) => (
                       <li key={index} className="flex items-start gap-3 text-sm">
                         <div className="w-6 h-6 bg-yellow-500/10 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
                           <span className="text-yellow-600 font-semibold text-xs">{index + 1}</span>
@@ -869,14 +948,15 @@ export default function AnalysisPage() {
               </Card>
 
               {/* Similar Projects */}
-              {analysis.similarProjects.length > 0 && (
+              {(analysis.similarProjects || []).length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Similar Projects for Reference</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {analysis.similarProjects.map((project, index) => (
+                      {/* 🔧 PROTECTED MAP OPERATION */}
+                      {(analysis.similarProjects || []).map((project, index) => (
                         <Badge key={index} variant="secondary">
                           {project}
                         </Badge>
