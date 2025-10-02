@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const { idea } = await request.json()
 
-    // 🚀 1. ENHANCED PROMPT ENGINEERING
+    // 🚀 1. ENHANCED PROMPT ENGINEERING with NEW STRUCTURE
     const enhancedPrompt = `
 You are a senior technical consultant and project evaluator with 15+ years of experience across software development, startup ventures, and CS education. You have deep expertise in realistic project scoping and understand common pitfalls developers encounter.
 
@@ -61,6 +61,34 @@ CRITICAL CONSTRAINTS TO CONSIDER:
 ✓ Integration complexity and API limitations
 ✓ Deployment and maintenance overhead
 
+REQUIRED ANALYSIS STRUCTURE:
+You MUST follow this exact structure for the feasibility analysis:
+
+1. HONEST AI FEEDBACK:
+- Assess if the idea solves a real, clear problem
+- Evaluate if it's a common/oversaturated idea
+- Determine uniqueness and differentiation factors
+- Judge if the problem is worth solving (big enough pain point)
+- Assess if expert knowledge is required
+- Provide 4-5 lines of brutally honest reality check
+
+2. KEY STRENGTHS:
+- Value Proposition: Unique advantages (speed, cost savings, convenience, innovation)
+- Market Fit: Pain points strongly felt by target audience
+
+3. POTENTIAL CHALLENGES:
+- Technical Risks: Unknowns in tech (AI accuracy, performance limits, integrations)
+- User/Client Usability Issues: UX/UI challenges, adoption barriers
+- Market/Business Risks: Competition, monetization, user acquisition
+
+4. REQUIREMENTS & SCOPE:
+- Must-have features vs nice-to-have features
+- Constraints: budget, time, skills, regulations
+
+5. TARGET USERS / MARKET FIT:
+- Specific user demographics and personas
+- Demand/interest validation for this solution
+
 IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text before or after the JSON.
 
 {
@@ -71,16 +99,26 @@ IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text bef
   "detectedDomain": "Web Development" | "Mobile App Development" | "Machine Learning/AI" | "Data Science" | "Game Development" | "Blockchain/Crypto" | "IoT/Hardware" | "Cybersecurity" | "DevOps/Cloud" | "Desktop Applications",
   "requiredExperience": "Beginner" | "Intermediate" | "Advanced",
   "estimatedTimeline": "string (realistic with 50% buffer)",
-  "keyStrengths": [
-    "Specific project advantages",
-    "Learning opportunities", 
-    "Market potential"
-  ],
-  "potentialChallenges": [
-    "possible technical hurdles",
-    "client/user usability issues",
-    "Market/adoption challenges"
-  ],
+  "honestAiFeedback": "4-5 lines of brutally honest reality check covering problem validation, uniqueness, market size, and expert requirements",
+  "keyStrengths": {
+    "valueProposition": "Unique advantages like speed, cost savings, convenience, or innovation",
+    "marketFit": "How well this solves pain points felt by target audience"
+  },
+  "potentialChallenges": {
+    "technicalRisks": "Unknowns in technology, performance limits, integration challenges",
+    "usabilityIssues": "User experience challenges, adoption barriers, interface complexity",
+    "marketRisks": "Competition, monetization challenges, user acquisition difficulties"
+  },
+  "requirementsScope": {
+    "mustHaveFeatures": ["Essential features for MVP"],
+    "niceToHaveFeatures": ["Secondary features for later versions"],
+    "constraints": ["Budget limitations", "Time constraints", "Skill requirements", "Regulatory challenges"]
+  },
+  "targetUsersMarketFit": {
+    "primaryUsers": "Specific user demographics and personas",
+    "marketDemand": "Evidence of demand or interest in this solution",
+    "userValidation": "How to validate user interest and market need"
+  },
   "techStack": {
     "frontend": ["appropriate for complexity level"],
     "backend": ["scalable, maintainable"],
@@ -112,13 +150,13 @@ IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text bef
   "similarProjects": ["real-world examples"]
 }
 
-Be conservative with all estimates. Return only the JSON object above with no additional text.`
+Be conservative with all estimates and brutally honest in your feedback. Return only the JSON object above with no additional text.`
 
     // 🚀 2. SIMPLIFIED SINGLE-MODEL APPROACH (to avoid validation errors)
     const { text } = await generateText({
       model: groq("llama-3.1-8b-instant"),
       prompt: enhancedPrompt,
-      temperature: 0.2 // ✅ Added maxTokens
+      temperature: 0.2 // Increased for more detailed analysis
     })
 
     console.log("[DEBUG] Raw AI response:", text.substring(0, 200) + "...")
@@ -129,7 +167,7 @@ Be conservative with all estimates. Return only the JSON object above with no ad
       // Try to parse the full response first
       analysis = JSON.parse(text.trim())
     } catch (parseError) {
-      console.log("[DEBUG] Direcnpt parsing failed, attempting JSON extraction...")
+      console.log("[DEBUG] Direct parsing failed, attempting JSON extraction...")
       
       // Extract JSON from the response more aggressively
       const jsonStart = text.indexOf('{')
@@ -163,7 +201,7 @@ Be conservative with all estimates. Return only the JSON object above with no ad
   }
 }
 
-// 🚀 FALLBACK ANALYSIS FUNCTION
+// 🚀 UPDATED FALLBACK ANALYSIS FUNCTION
 function createFallbackAnalysis(idea: string): any {
   const ideaLower = idea.toLowerCase()
   
@@ -196,16 +234,26 @@ function createFallbackAnalysis(idea: string): any {
     detectedDomain,
     requiredExperience: difficultyLevel,
     estimatedTimeline: "2-4 months with buffer",
-    keyStrengths: [
-      "Clear project concept",
-      "Learning opportunity",
-      "Portfolio value"
-    ],
-    potentialChallenges: [
-      "Technical complexity",
-      "Time management",
-      "Resource constraints"
-    ],
+    honestAiFeedback: "This project addresses a recognizable need but may face significant competition in the market. The technical complexity suggests intermediate to advanced skills are required. Market validation will be crucial before full development. Success depends heavily on execution quality and user acquisition strategy.",
+    keyStrengths: {
+      valueProposition: "Clear problem-solution fit with potential for user engagement",
+      marketFit: "Addresses common pain points that users actively seek solutions for"
+    },
+    potentialChallenges: {
+      technicalRisks: "Integration complexity and potential performance bottlenecks",
+      usabilityIssues: "User adoption barriers and interface complexity challenges",
+      marketRisks: "Competitive landscape and user acquisition costs"
+    },
+    requirementsScope: {
+      mustHaveFeatures: ["Core functionality", "User authentication", "Basic interface"],
+      niceToHaveFeatures: ["Advanced analytics", "Social features", "Mobile optimization"],
+      constraints: ["Limited development time", "Budget constraints", "Technical expertise required"]
+    },
+    targetUsersMarketFit: {
+      primaryUsers: "General users seeking solutions to common problems",
+      marketDemand: "Moderate demand with room for differentiation",
+      userValidation: "Conduct user interviews and prototype testing"
+    },
     techStack: {
       frontend: ["React", "TypeScript"],
       backend: ["Node.js", "Express"],

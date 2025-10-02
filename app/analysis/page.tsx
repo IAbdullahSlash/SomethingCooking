@@ -30,9 +30,30 @@ interface AnalysisData {
   difficultyLevel: string
   estimatedTimeframe: string
   successProbability: number
-  keyStrengths: string[]
-  potentialChallenges: string[]
-  // New fields that AI will determine automatically
+  
+  // NEW STRUCTURED ANALYSIS FIELDS
+  honestAiFeedback: string
+  keyStrengths: {
+    valueProposition: string
+    marketFit: string
+  }
+  potentialChallenges: {
+    technicalRisks: string
+    usabilityIssues: string
+    marketRisks: string
+  }
+  requirementsScope: {
+    mustHaveFeatures: string[]
+    niceToHaveFeatures: string[]
+    constraints: string[]
+  }
+  targetUsersMarketFit: {
+    primaryUsers: string
+    marketDemand: string
+    userValidation: string
+  }
+  
+  // EXISTING FIELDS
   detectedDomain: string
   requiredExperience: string
   estimatedTimeline: string
@@ -100,8 +121,11 @@ export default function AnalysisPage() {
   const validateAnalysisData = (analysisData: any): AnalysisData => {
     // Add this safety check at the top of your component
     if (analysisData && (
+      !analysisData.honestAiFeedback || 
       !analysisData.keyStrengths || 
       !analysisData.potentialChallenges || 
+      !analysisData.requirementsScope ||
+      !analysisData.targetUsersMarketFit ||
       !analysisData.techStack || 
       !analysisData.roadmap ||
       !analysisData.recommendations ||
@@ -112,8 +136,26 @@ export default function AnalysisPage() {
 
     return {
       ...analysisData,
-      keyStrengths: analysisData.keyStrengths || [],
-      potentialChallenges: analysisData.potentialChallenges || [],
+      honestAiFeedback: analysisData.honestAiFeedback || "Analysis feedback not available",
+      keyStrengths: {
+        valueProposition: analysisData.keyStrengths?.valueProposition || "Value proposition assessment needed",
+        marketFit: analysisData.keyStrengths?.marketFit || "Market fit analysis needed"
+      },
+      potentialChallenges: {
+        technicalRisks: analysisData.potentialChallenges?.technicalRisks || "Technical risk assessment needed",
+        usabilityIssues: analysisData.potentialChallenges?.usabilityIssues || "Usability review needed",
+        marketRisks: analysisData.potentialChallenges?.marketRisks || "Market risk analysis needed"
+      },
+      requirementsScope: {
+        mustHaveFeatures: analysisData.requirementsScope?.mustHaveFeatures || [],
+        niceToHaveFeatures: analysisData.requirementsScope?.niceToHaveFeatures || [],
+        constraints: analysisData.requirementsScope?.constraints || []
+      },
+      targetUsersMarketFit: {
+        primaryUsers: analysisData.targetUsersMarketFit?.primaryUsers || "User analysis needed",
+        marketDemand: analysisData.targetUsersMarketFit?.marketDemand || "Market demand assessment needed",
+        userValidation: analysisData.targetUsersMarketFit?.userValidation || "User validation strategy needed"
+      },
       recommendations: analysisData.recommendations || [],
       similarProjects: analysisData.similarProjects || [],
       techStack: {
@@ -619,16 +661,21 @@ export default function AnalysisPage() {
                 </Card>
               )}
 
-              {/* Feasibility Analysis */}
+              {/* NEW STRUCTURED FEASIBILITY ANALYSIS */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="w-6 h-6 text-green-500" />
-                    Feasibility Analysis
+                    <Brain className="w-6 h-6 text-purple-500" />
+                    Comprehensive Project Analysis
                   </CardTitle>
+                  <CardDescription>
+                    Detailed evaluation based on market reality, technical feasibility, and success factors
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <CardContent className="space-y-8">
+                  
+                  {/* Overview Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/20 rounded-lg">
                     <div className="text-center">
                       <div className={`text-3xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
                         {analysis.feasibilityScore}/10
@@ -645,31 +692,134 @@ export default function AnalysisPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2 text-green-500">Key Strengths</h4>
-                      <ul className="space-y-1">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.keyStrengths || []).map((strength, index) => (
-                          <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            {strength}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  {/* 1. HONEST AI FEEDBACK */}
+                  <div className="border-l-4 border-red-500 pl-4 bg-red-500/5 p-4 rounded-r-lg">
+                    <h3 className="font-bold text-red-600 mb-3 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      1. Honest AI Feedback - Reality Check
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {analysis.honestAiFeedback || "No honest feedback available"}
+                    </p>
+                  </div>
 
-                    <div>
-                      <h4 className="font-semibold mb-2 text-yellow-500">Potential Challenges</h4>
-                      <ul className="space-y-1">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.potentialChallenges || []).map((challenge, index) => (
-                          <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                            {challenge}
-                          </li>
+                  {/* 2. KEY STRENGTHS */}
+                  <div className="border-l-4 border-green-500 pl-4 bg-green-500/5 p-4 rounded-r-lg">
+                    <h3 className="font-bold text-green-600 mb-4 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      2. Key Strengths
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-green-700 mb-2">💡 Value Proposition</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.keyStrengths?.valueProposition || "Value proposition analysis needed"}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-green-700 mb-2">🎯 Market Fit</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.keyStrengths?.marketFit || "Market fit analysis needed"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. POTENTIAL CHALLENGES */}
+                  <div className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
+                    <h3 className="font-bold text-yellow-600 mb-4 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      3. Potential Challenges
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-yellow-700 mb-2">⚙️ Technical Risks</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.potentialChallenges?.technicalRisks || "Technical risk assessment needed"}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-yellow-700 mb-2">👥 User/Client Usability Issues</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.potentialChallenges?.usabilityIssues || "Usability review needed"}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-yellow-700 mb-2">📈 Market/Business Risks</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.potentialChallenges?.marketRisks || "Market risk analysis needed"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. REQUIREMENTS & SCOPE */}
+                  <div className="border-l-4 border-blue-500 pl-4 bg-blue-500/5 p-4 rounded-r-lg">
+                    <h3 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
+                      <Code className="w-5 h-5" />
+                      4. Requirements & Scope
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold text-blue-700 mb-3">🎯 Must-Have Features</h4>
+                        <ul className="space-y-1">
+                          {(analysis.requirementsScope?.mustHaveFeatures || []).map((feature, index) => (
+                            <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-blue-500 font-bold">•</span>
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-700 mb-3">✨ Nice-to-Have Features</h4>
+                        <ul className="space-y-1">
+                          {(analysis.requirementsScope?.niceToHaveFeatures || []).map((feature, index) => (
+                            <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-blue-400">◦</span>
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <h4 className="font-semibold text-blue-700 mb-3">⚠️ Constraints</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {(analysis.requirementsScope?.constraints || []).map((constraint, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {constraint}
+                          </Badge>
                         ))}
-                      </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. TARGET USERS / MARKET FIT */}
+                  <div className="border-l-4 border-purple-500 pl-4 bg-purple-500/5 p-4 rounded-r-lg">
+                    <h3 className="font-bold text-purple-600 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5" />
+                      5. Target Users & Market Fit
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-purple-700 mb-2">👤 Primary Users</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.targetUsersMarketFit?.primaryUsers || "User analysis needed"}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-purple-700 mb-2">📊 Market Demand</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.targetUsersMarketFit?.marketDemand || "Market demand assessment needed"}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-purple-700 mb-2">✅ User Validation Strategy</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {analysis.targetUsersMarketFit?.userValidation || "User validation strategy needed"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
