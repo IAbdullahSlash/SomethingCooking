@@ -8,17 +8,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 })
     }
 
-    const searchUrl = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=6`
+    const searchUrl = `https://api.github.com/search/repositories?q=${encodeURIComponent(
+      query
+    )}&sort=stars&order=desc&per_page=6`
 
     const response = await fetch(searchUrl, {
       headers: {
         Accept: "application/vnd.github.v3+json",
         "User-Agent": "Idea-Evaluator-App",
+        Authorization: `token ${process.env.GITHUB_TOKEN}`, // ✅ token added for higher rate limit
       },
     })
 
+    // ✅ Handle GitHub errors gracefully and show the real issue
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status}`)
+      const errorData = await response.json().catch(() => ({}))
+      return NextResponse.json(
+        {
+          error:
+            errorData.message ||
+            `GitHub API error: ${response.status} ${response.statusText}`,
+        },
+        { status: response.status }
+      )
     }
 
     const data = await response.json()
@@ -36,6 +48,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ repositories })
   } catch (error) {
     console.error("GitHub API error:", error)
-    return NextResponse.json({ error: "Failed to fetch repositories" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch repositories" },
+      { status: 500 }
+    )
   }
 }

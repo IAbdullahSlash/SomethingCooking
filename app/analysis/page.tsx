@@ -22,9 +22,11 @@ import {
   Edit3,
   TrendingUp,
   ArrowRight,
+  MessageCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { AIAssistantChat } from "@/components/AIAssistantChat"
 
 interface AnalysisData {
   feasibilityScore: number
@@ -111,6 +113,7 @@ export default function AnalysisPage() {
     title: "",
     description: "",
   })
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false)
 
   // Simplified form data - only idea description needed
   const [formData, setFormData] = useState({
@@ -467,6 +470,14 @@ export default function AnalysisPage() {
                 >
                   {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   Export PDF
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => setIsAIChatOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  AI Assistant
                 </Button>
               </div>
             )}
@@ -1147,6 +1158,13 @@ export default function AnalysisPage() {
           )}
         </div>
       </div>
+
+      {/* AI Assistant Chat */}
+      <AIAssistantChat
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        projectContext={analysis ? `${analysis.projectTitle}: ${analysis.projectDescription}` : undefined}
+      />
     </div>
   )
 }
