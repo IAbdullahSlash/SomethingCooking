@@ -1,25 +1,38 @@
-import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/ThemeProvider"
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: "The Idea Evaluator - AI-Powered Project Analysis",
+  description: "Transform your project ideas into actionable plans with AI-powered feasibility analysis, timeline estimation, and tech stack recommendations.",
+  keywords: ["AI", "project analysis", "feasibility study", "tech stack", "project planning"],
+  authors: [{ name: "The Idea Evaluator Team" }],
+  openGraph: {
+    title: "The Idea Evaluator - AI-Powered Project Analysis",
+    description: "Transform your project ideas into actionable plans with AI-powered analysis.",
+    type: "website",
+  },
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        {children}
-        <Analytics />
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

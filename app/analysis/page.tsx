@@ -24,6 +24,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 import Link from "next/link"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface AnalysisData {
   feasibilityScore: number
@@ -432,7 +433,7 @@ export default function AnalysisPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -457,6 +458,7 @@ export default function AnalysisPage() {
                   <Edit3 className="w-4 h-4" />
                   Refine Project
                 </Button>
+                <ThemeToggle />
                 <Button
                   variant="outline"
                   onClick={exportToPDF}

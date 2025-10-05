@@ -122,7 +122,7 @@ IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text bef
   "techStack": {
     "frontend": ["appropriate for complexity level"],
     "backend": ["scalable, maintainable"],
-    "database": ["suitable for data needs"],
+    "database": ["suitable for data needs, suggest only one database"],
     "tools": ["development, deployment, monitoring"]
   },
   "roadmap": {
