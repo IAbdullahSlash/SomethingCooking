@@ -36,10 +36,10 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
 
   // Suggested questions based on the project context
   const suggestedQuestions = [
-    "How can i to make this project unique?",
-    "Is it very difficult?",
-    "What will i have to learn first to implement this project?",
-    "What is Future scope of this?",
+    "What are the main technical challenges I should expect with this project?",
+    "How can I validate my project idea before investing significant time?",
+    "What technologies would be best suited for this type of project?",
+    "What is the recommended development approach for a beginner vs experienced developer?",
   ]
 
   React.useEffect(() => {
@@ -63,19 +63,43 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
     setIsLoading(true)
 
     try {
-      // Simulate AI response (replace with actual API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Call the Gemini API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          projectContext: projectContext,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get AI response')
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `I understand your question about "${userMessage.content}". Let me help you with that.\n\nBased on your project context, I can provide guidance on implementation strategies, best practices, and potential challenges. Would you like me to elaborate on any specific aspect?`,
+        content: data.message || "I apologize, but I couldn't generate a response. Please try again.",
         timestamp: new Date(),
       }
 
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
       console.error("Error sending message:", error)
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -183,7 +207,7 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
           {messages.length <= 1 && (
             <div className="p-4 border-t bg-muted/30">
               <p className="text-sm text-muted-foreground mb-3">
-                Some questions you might have about this Project:
+                Some questions you might have about this project:
               </p>
               <div className="space-y-2">
                 {suggestedQuestions.map((question, index) => (
@@ -206,7 +230,7 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask AI anything about your Project idea..."
+                placeholder="Ask AI anything about your project..."
                 className="min-h-[60px] max-h-[120px] resize-none"
                 disabled={isLoading}
               />
