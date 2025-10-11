@@ -4,7 +4,6 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { MessageCircle, X, Send, Loader2, Bot, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -22,7 +21,7 @@ interface AIAssistantChatProps {
 }
 
 export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistantChatProps) {
-  const [messages, setMessages] = React.useState<Message[]>([
+ const [messages, setMessages] = React.useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
@@ -32,6 +31,8 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
   ])
   const [input, setInput] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
+  const [isThinking, setIsThinking] = React.useState(false)
+  const [streamingMessage, setStreamingMessage] = React.useState("")
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
   // Suggested questions based on the project context
@@ -41,14 +42,13 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
     "What technologies would be best suited for this type of project?",
     "What is the recommended development approach for a beginner vs experienced developer?",
   ]
-
-  React.useEffect(() => {
+React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, isThinking, streamingMessage])
 
-  const handleSendMessage = async () => {
+ const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -61,8 +61,11 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
+    setIsThinking(true)
+    setStreamingMessage("")
 
     try {
+     
       // Call the Gemini API
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -81,16 +84,36 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
         throw new Error(data.error || 'Failed to get AI response')
       }
 
+      const fullMessage = data.message || "I apologize, but I couldn't generate a response. Please try again."
+      
+      // Stop thinking and start streaming
+      setIsThinking(false)
+      
+      // Stream the message word by word
+      const words = fullMessage.split(' ')
+      let currentText = ''
+      
+      for (let i = 0; i < words.length; i++) {
+        currentText += (i === 0 ? '' : ' ') + words[i]
+        setStreamingMessage(currentText)
+        await new Promise(resolve => setTimeout(resolve, 50)) // 50ms delay between words
+      }
+
+      // Add the complete message to messages array
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.message || "I apologize, but I couldn't generate a response. Please try again.",
+        content: fullMessage,
         timestamp: new Date(),
       }
 
       setMessages((prev) => [...prev, assistantMessage])
+      setStreamingMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
+      
+      setIsThinking(false)
+      setStreamingMessage("")
       
       // Add error message to chat
       const errorMessage: Message = {
@@ -158,7 +181,7 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+          <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
@@ -190,18 +213,28 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
                   )}
                 </div>
               ))}
-              {isLoading && (
+              {isThinking && (
                 <div className="flex gap-3 justify-start">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-primary" />
                   </div>
                   <div className="bg-muted rounded-lg px-4 py-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <p className="text-sm text-muted-foreground italic">Thinking...</p>
+                  </div>
+                </div>
+              )}
+              {streamingMessage && (
+                <div className="flex gap-3 justify-start">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
+                    <p className="text-sm whitespace-pre-wrap">{streamingMessage}</p>
                   </div>
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Suggested Questions */}
           {messages.length <= 1 && (
