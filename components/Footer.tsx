@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { Brain, Github, Twitter, Linkedin } from "lucide-react"
 
 export function Footer() {
@@ -8,24 +7,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2">
+            <a href="/" className="flex items-center space-x-2">
               <Brain className="h-8 w-8 text-primary" />
               <span className="font-bold text-xl">The Idea Evaluator</span>
-            </Link>
+            </a>
             <p className="text-muted-foreground text-sm">
               AI-powered project analysis to help you build better products and make informed decisions.
             </p>
-            <div className="flex space-x-4">
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Github className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </Link>
-            </div>
           </div>
 
           {/* Product */}
@@ -33,24 +21,24 @@ export function Footer() {
             <h3 className="font-semibold">Product</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/analysis" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/analysis" className="text-muted-foreground hover:text-foreground transition-colors">
                   Analysis Tool
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Features
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Pricing
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   API
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -60,24 +48,24 @@ export function Footer() {
             <h3 className="font-semibold">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Documentation
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Blog
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Examples
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Support
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -87,31 +75,94 @@ export function Footer() {
             <h3 className="font-semibold">Company</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   About
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Privacy Policy
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Terms of Service
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Contact
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t mt-12 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 The Idea Evaluator. All rights reserved.</p>
+          <div className="mb-6 space-y-3">
+            <p className="font-semibold">Made By:</p>
+            <div className="flex justify-center items-center space-x-3">
+              <span className="text-muted-foreground">Abdullah</span>
+              <a 
+                href="https://twitter.com/contributor1" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-[#1DA1F2] transition-colors"
+                aria-label="Abdullah Twitter"
+              >
+                <Twitter className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://github.com/IAbdullahSlash" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Abdullah GitHub"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://www.linkedin.com/in/abdullah-azmi-492120359/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-[#0A66C2] transition-colors"
+                aria-label="Abdullah LinkedIn"
+              >
+                <Linkedin className="h-4 w-4" />
+              </a>
+            </div>
+            <div className="flex justify-center items-center space-x-3">
+              <span className="text-muted-foreground">Darakhshan</span>
+              <a 
+                href="https://twitter.com/contributor2" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-[#1DA1F2] transition-colors"
+                aria-label="Darakhshan Twitter"
+              >
+                <Twitter className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://github.com/Darakhshan-dev" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Darakhshan GitHub"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+              <a 
+                href="https://www.linkedin.com/in/darakhshan-ifraque-6287a1320/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-[#0A66C2] transition-colors"
+                aria-label="Darakhshan LinkedIn"
+              >
+                <Linkedin className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+          
         </div>
       </div>
     </footer>
