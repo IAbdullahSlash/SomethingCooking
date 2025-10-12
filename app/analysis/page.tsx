@@ -946,34 +946,15 @@ export default function AnalysisPage() {
                         <h4 className="font-semibold text-blue-500">
                           {analysis.roadmap?.phase1?.title || "Phase 1"} ({analysis.roadmap?.phase1?.duration || "TBD"})
                         </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {Math.round(getPhaseProgress(analysis.roadmap?.phase1?.tasks || [], "phase1"))}%
-                          </span>
-                          <Progress
-                            value={getPhaseProgress(analysis.roadmap?.phase1?.tasks || [], "phase1")}
-                            className="w-20 h-2"
-                          />
-                        </div>
                       </div>
                       <div className="space-y-2">
                         {/* 🔧 PROTECTED MAP OPERATION */}
                         {(analysis.roadmap?.phase1?.tasks || []).map((task, index) => (
                           <div key={index} className="flex items-start gap-3">
-                            <Checkbox
-                              id={`phase1-${index}`}
-                              checked={taskProgress[`phase1-${index}`] || false}
-                              onCheckedChange={() => handleTaskToggle(`phase1-${index}`)}
-                              className="mt-0.5"
-                            />
-                            <label
-                              htmlFor={`phase1-${index}`}
-                              className={`text-sm cursor-pointer ${
-                                taskProgress[`phase1-${index}`] ? "line-through text-muted-foreground" : "text-foreground"
-                              }`}
-                            >
+                            <span className="text-blue-500 font-bold mt-0.5">•</span>
+                            <span className="text-sm text-foreground">
                               {task}
-                            </label>
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -985,34 +966,15 @@ export default function AnalysisPage() {
                         <h4 className="font-semibold text-yellow-500">
                           {analysis.roadmap?.phase2?.title || "Phase 2"} ({analysis.roadmap?.phase2?.duration || "TBD"})
                         </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {Math.round(getPhaseProgress(analysis.roadmap?.phase2?.tasks || [], "phase2"))}%
-                          </span>
-                          <Progress
-                            value={getPhaseProgress(analysis.roadmap?.phase2?.tasks || [], "phase2")}
-                            className="w-20 h-2"
-                          />
-                        </div>
                       </div>
                       <div className="space-y-2">
                         {/* 🔧 PROTECTED MAP OPERATION */}
                         {(analysis.roadmap?.phase2?.tasks || []).map((task, index) => (
                           <div key={index} className="flex items-start gap-3">
-                            <Checkbox
-                              id={`phase2-${index}`}
-                              checked={taskProgress[`phase2-${index}`] || false}
-                              onCheckedChange={() => handleTaskToggle(`phase2-${index}`)}
-                              className="mt-0.5"
-                            />
-                            <label
-                              htmlFor={`phase2-${index}`}
-                              className={`text-sm cursor-pointer ${
-                                taskProgress[`phase2-${index}`] ? "line-through text-muted-foreground" : "text-foreground"
-                              }`}
-                            >
+                            <span className="text-yellow-500 font-bold mt-0.5">•</span>
+                            <span className="text-sm text-foreground">
                               {task}
-                            </label>
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -1024,47 +986,19 @@ export default function AnalysisPage() {
                         <h4 className="font-semibold text-green-500">
                           {analysis.roadmap?.phase3?.title || "Phase 3"} ({analysis.roadmap?.phase3?.duration || "TBD"})
                         </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {Math.round(getPhaseProgress(analysis.roadmap?.phase3?.tasks || [], "phase3"))}%
-                          </span>
-                          <Progress
-                            value={getPhaseProgress(analysis.roadmap?.phase3?.tasks || [], "phase3")}
-                            className="w-20 h-2"
-                          />
-                        </div>
                       </div>
                       <div className="space-y-2">
                         {/* 🔧 PROTECTED MAP OPERATION */}
                         {(analysis.roadmap?.phase3?.tasks || []).map((task, index) => (
                           <div key={index} className="flex items-start gap-3">
-                            <Checkbox
-                              id={`phase3-${index}`}
-                              checked={taskProgress[`phase3-${index}`] || false}
-                              onCheckedChange={() => handleTaskToggle(`phase3-${index}`)}
-                              className="mt-0.5"
-                            />
-                            <label
-                              htmlFor={`phase3-${index}`}
-                              className={`text-sm cursor-pointer ${
-                                taskProgress[`phase3-${index}`] ? "line-through text-muted-foreground" : "text-foreground"
-                              }`}
-                            >
+                            <span className="text-green-500 font-bold mt-0.5">•</span>
+                            <span className="text-sm text-foreground">
                               {task}
-                            </label>
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Overall Progress */}
-                  <div className="bg-muted/30 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold">Overall Progress</h4>
-                      <span className="text-sm font-medium">{Math.round(getOverallProgress())}%</span>
-                    </div>
-                    <Progress value={getOverallProgress()} className="h-3" />
                   </div>
                 </CardContent>
               </Card>
