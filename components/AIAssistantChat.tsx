@@ -6,6 +6,11 @@ import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { MessageCircle, X, Send, Loader2, Bot, User } from "lucide-react"
 import { cn } from "@/lib/utils"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeHighlight from 'rehype-highlight'
+import rehypeRaw from 'rehype-raw'
+import 'highlight.js/styles/github-dark.css' // Choose your preferred theme
 
 interface Message {
   id: string
@@ -284,5 +289,94 @@ React.useEffect(() => {
         </div>
       </div>
     </>
+  )
+}
+
+// In your chat message component
+function ChatMessage({ message, isUser }: { message: string, isUser: boolean }) {
+  if (isUser) {
+    return (
+      <div className="flex justify-end mb-4">
+        <div className="bg-blue-500 text-white rounded-lg px-4 py-2 max-w-[70%]">
+          {message}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex justify-start mb-4">
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 max-w-[70%]">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight, rehypeRaw]}
+          className="prose prose-sm dark:prose-invert max-w-none"
+          components={{
+            // Custom styling for different elements
+            h1: ({ children }) => (
+              <h1 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
+                {children}
+              </h1>
+            ),
+            h2: ({ children }) => (
+              <h2 className="text-lg font-semibold mb-2 mt-4 text-gray-800 dark:text-gray-200">
+                {children}
+              </h2>
+            ),
+            h3: ({ children }) => (
+              <h3 className="text-md font-medium mb-2 mt-3 text-gray-700 dark:text-gray-300">
+                {children}
+              </h3>
+            ),
+            code: ({ inline, children, ...props }) => (
+              inline ? (
+                <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono text-red-600 dark:text-red-400">
+                  {children}
+                </code>
+              ) : (
+                <code {...props} className="block bg-gray-900 text-green-400 p-3 rounded-md overflow-x-auto">
+                  {children}
+                </code>
+              )
+            ),
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-4 border-blue-500 pl-4 italic bg-blue-50 dark:bg-blue-900/20 py-2 my-3">
+                {children}
+              </blockquote>
+            ),
+            ul: ({ children }) => (
+              <ul className="list-disc list-inside space-y-1 mb-3">
+                {children}
+              </ul>
+            ),
+            ol: ({ children }) => (
+              <ol className="list-decimal list-inside space-y-1 mb-3">
+                {children}
+              </ol>
+            ),
+            li: ({ children }) => (
+              <li className="text-gray-700 dark:text-gray-300">
+                {children}
+              </li>
+            ),
+            strong: ({ children }) => (
+              <strong className="font-semibold text-gray-900 dark:text-white">
+                {children}
+              </strong>
+            ),
+            p: ({ children }) => (
+              <p className="mb-3 text-gray-700 dark:text-gray-300 leading-relaxed">
+                {children}
+              </p>
+            ),
+            hr: () => (
+              <hr className="my-4 border-gray-300 dark:border-gray-600" />
+            )
+          }}
+        >
+          {message}
+        </ReactMarkdown>
+      </div>
+    </div>
   )
 }
