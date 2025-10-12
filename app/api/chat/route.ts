@@ -74,7 +74,8 @@ Please provide a helpful and informative response:`
 
     return NextResponse.json({
       message: text,
-      success: true
+      success: true,
+      formatted: true
     })
 
   } catch (error) {

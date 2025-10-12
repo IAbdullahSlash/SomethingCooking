@@ -4,8 +4,9 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { MessageCircle, X, Send, Loader2, Bot, User } from "lucide-react"
+import { MessageCircle, X, Send, Loader2, Bot, User, Square } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -20,12 +21,11 @@ interface Message {
 }
 
 interface AIAssistantChatProps {
-  isOpen: boolean
-  onClose: () => void
-  projectContext?: string
+  // No props needed - we'll use context
 }
 
-export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistantChatProps) {
+export function AIAssistantChat() {
+  const { isOpen, closeAssistant, selectedText, projectContext } = useAIAssistant()
  const [messages, setMessages] = React.useState<Message[]>([
     {
       id: "welcome",
@@ -38,6 +38,8 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
   const [isLoading, setIsLoading] = React.useState(false)
   const [isThinking, setIsThinking] = React.useState(false)
   const [streamingMessage, setStreamingMessage] = React.useState("")
+  const [isStreaming, setIsStreaming] = React.useState(false)
+  const [abortController, setAbortController] = React.useState<AbortController | null>(null)
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
   // Suggested questions based on the project context
@@ -47,11 +49,29 @@ export function AIAssistantChat({ isOpen, onClose, projectContext }: AIAssistant
     "What technologies would be best suited for this type of project?",
     "What is the recommended development approach for a beginner vs experienced developer?",
   ]
+
+  // Auto-populate input with selected text
+  React.useEffect(() => {
+    if (selectedText && isOpen) {
+      setInput(`Please explain this: "${selectedText}"`)
+    }
+  }, [selectedText, isOpen])
 React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages, isThinking, streamingMessage])
+
+  const stopGeneration = () => {
+    if (abortController) {
+      abortController.abort()
+    }
+    setIsLoading(false)
+    setIsThinking(false)
+    setIsStreaming(false)
+    setStreamingMessage("")
+    setAbortController(null)
+  }
 
  const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -69,6 +89,10 @@ React.useEffect(() => {
     setIsThinking(true)
     setStreamingMessage("")
 
+    // Create abort controller for this request
+    const controller = new AbortController()
+    setAbortController(controller)
+
     try {
      
       // Call the Gemini API
@@ -81,7 +105,13 @@ React.useEffect(() => {
           message: userMessage.content,
           projectContext: projectContext,
         }),
+        signal: controller.signal,
       })
+
+      // Check if request was aborted
+      if (controller.signal.aborted) {
+        return
+      }
 
       const data = await response.json()
 
@@ -93,15 +123,26 @@ React.useEffect(() => {
       
       // Stop thinking and start streaming
       setIsThinking(false)
+      setIsStreaming(true)
       
       // Stream the message word by word
       const words = fullMessage.split(' ')
       let currentText = ''
       
       for (let i = 0; i < words.length; i++) {
+        // Check if generation was stopped
+        if (controller.signal.aborted) {
+          return
+        }
+        
         currentText += (i === 0 ? '' : ' ') + words[i]
         setStreamingMessage(currentText)
         await new Promise(resolve => setTimeout(resolve, 50)) // 50ms delay between words
+      }
+
+      // Check once more before finalizing
+      if (controller.signal.aborted) {
+        return
       }
 
       // Add the complete message to messages array
@@ -114,10 +155,17 @@ React.useEffect(() => {
 
       setMessages((prev) => [...prev, assistantMessage])
       setStreamingMessage("")
+      setIsStreaming(false)
     } catch (error) {
+      // Handle abort error silently
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
+      
       console.error("Error sending message:", error)
       
       setIsThinking(false)
+      setIsStreaming(false)
       setStreamingMessage("")
       
       // Add error message to chat
@@ -130,6 +178,7 @@ React.useEffect(() => {
       setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setAbortController(null)
     }
   }
 
@@ -150,7 +199,7 @@ React.useEffect(() => {
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
-          onClick={onClose}
+          onClick={closeAssistant}
         />
       )}
 
@@ -178,7 +227,7 @@ React.useEffect(() => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={closeAssistant}
               className="rounded-full"
             >
               <X className="w-5 h-5" />
@@ -209,7 +258,80 @@ React.useEffect(() => {
                         : "bg-muted"
                     )}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {/* Replace this plain text with ReactMarkdown */}
+                    {message.role === "assistant" ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                          components={{
+                          h1: ({ children }) => (
+                            <h1 className="text-xl font-bold mb-3 text-foreground">
+                              {children}
+                            </h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-lg font-semibold mb-2 mt-4 text-foreground">
+                              {children}
+                            </h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-md font-medium mb-2 mt-3 text-foreground">
+                              {children}
+                            </h3>
+                          ),
+                          code: ({ node, inline, className, children, ...props }: any) => (
+                            inline ? (
+                              <code className="bg-primary/20 px-1 py-0.5 rounded text-sm font-mono text-primary">
+                                {children}
+                              </code>
+                            ) : (
+                              <code {...props} className="block bg-secondary p-3 rounded-md overflow-x-auto text-sm">
+                                {children}
+                              </code>
+                            )
+                          ),
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-primary pl-4 italic bg-primary/5 py-2 my-3">
+                              {children}
+                            </blockquote>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc list-inside space-y-1 mb-3">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal list-inside space-y-1 mb-3">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="text-foreground">
+                              {children}
+                            </li>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-semibold text-foreground">
+                              {children}
+                            </strong>
+                          ),
+                          p: ({ children }) => (
+                            <p className="mb-3 text-foreground leading-relaxed">
+                              {children}
+                            </p>
+                          ),
+                          hr: () => (
+                            <hr className="my-4 border-border" />
+                          )
+                        }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    )}
                   </div>
                   {message.role === "user" && (
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
@@ -234,7 +356,47 @@ React.useEffect(() => {
                     <Bot className="w-4 h-4 text-primary" />
                   </div>
                   <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
-                    <p className="text-sm whitespace-pre-wrap">{streamingMessage}</p>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                        components={{
+                        // Same styling components as above
+                        h2: ({ children }) => (
+                          <h2 className="text-lg font-semibold mb-2 mt-4 text-foreground">
+                            {children}
+                          </h2>
+                        ),
+                        h3: ({ children }) => (
+                          <h3 className="text-md font-medium mb-2 mt-3 text-foreground">
+                            {children}
+                          </h3>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-foreground">
+                            {children}
+                          </strong>
+                        ),
+                        p: ({ children }) => (
+                          <p className="mb-3 text-foreground leading-relaxed">
+                            {children}
+                          </p>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="list-disc list-inside space-y-1 mb-3">
+                            {children}
+                          </ul>
+                        ),
+                        li: ({ children }) => (
+                          <li className="text-foreground">
+                            {children}
+                          </li>
+                        ),
+                      }}
+                      >
+                        {streamingMessage}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               )}
@@ -273,13 +435,14 @@ React.useEffect(() => {
                 disabled={isLoading}
               />
               <Button
-                onClick={handleSendMessage}
-                disabled={!input.trim() || isLoading}
+                onClick={isLoading ? stopGeneration : handleSendMessage}
+                disabled={!isLoading && !input.trim()}
                 size="icon"
                 className="h-[60px] w-[60px] flex-shrink-0"
+                variant={isLoading ? "destructive" : "default"}
               >
                 {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Square className="w-5 h-5" />
                 ) : (
                   <Send className="w-5 h-5" />
                 )}
@@ -289,94 +452,5 @@ React.useEffect(() => {
         </div>
       </div>
     </>
-  )
-}
-
-// In your chat message component
-function ChatMessage({ message, isUser }: { message: string, isUser: boolean }) {
-  if (isUser) {
-    return (
-      <div className="flex justify-end mb-4">
-        <div className="bg-blue-500 text-white rounded-lg px-4 py-2 max-w-[70%]">
-          {message}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex justify-start mb-4">
-      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 max-w-[70%]">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight, rehypeRaw]}
-          className="prose prose-sm dark:prose-invert max-w-none"
-          components={{
-            // Custom styling for different elements
-            h1: ({ children }) => (
-              <h1 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
-                {children}
-              </h1>
-            ),
-            h2: ({ children }) => (
-              <h2 className="text-lg font-semibold mb-2 mt-4 text-gray-800 dark:text-gray-200">
-                {children}
-              </h2>
-            ),
-            h3: ({ children }) => (
-              <h3 className="text-md font-medium mb-2 mt-3 text-gray-700 dark:text-gray-300">
-                {children}
-              </h3>
-            ),
-            code: ({ inline, children, ...props }) => (
-              inline ? (
-                <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono text-red-600 dark:text-red-400">
-                  {children}
-                </code>
-              ) : (
-                <code {...props} className="block bg-gray-900 text-green-400 p-3 rounded-md overflow-x-auto">
-                  {children}
-                </code>
-              )
-            ),
-            blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-blue-500 pl-4 italic bg-blue-50 dark:bg-blue-900/20 py-2 my-3">
-                {children}
-              </blockquote>
-            ),
-            ul: ({ children }) => (
-              <ul className="list-disc list-inside space-y-1 mb-3">
-                {children}
-              </ul>
-            ),
-            ol: ({ children }) => (
-              <ol className="list-decimal list-inside space-y-1 mb-3">
-                {children}
-              </ol>
-            ),
-            li: ({ children }) => (
-              <li className="text-gray-700 dark:text-gray-300">
-                {children}
-              </li>
-            ),
-            strong: ({ children }) => (
-              <strong className="font-semibold text-gray-900 dark:text-white">
-                {children}
-              </strong>
-            ),
-            p: ({ children }) => (
-              <p className="mb-3 text-gray-700 dark:text-gray-300 leading-relaxed">
-                {children}
-              </p>
-            ),
-            hr: () => (
-              <hr className="my-4 border-gray-300 dark:border-gray-600" />
-            )
-          }}
-        >
-          {message}
-        </ReactMarkdown>
-      </div>
-    </div>
   )
 }

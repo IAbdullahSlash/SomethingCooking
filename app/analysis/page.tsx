@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { SelectionTooltip } from "@/components/SelectionTooltip"
+import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import {
   Brain,
   CheckCircle,
@@ -130,6 +132,7 @@ export default function AnalysisPage() {
     description: "",
   })
   const [isAIChatOpen, setIsAIChatOpen] = useState(false)
+  const { setProjectContext } = useAIAssistant()
 
   // Simplified form data - only idea description needed
   const [formData, setFormData] = useState({
@@ -256,6 +259,9 @@ export default function AnalysisPage() {
 
         setAnalysis(enhancedAnalysis)
         localStorage.setItem("projectAnalysis", JSON.stringify(enhancedAnalysis))
+        
+        // Update AI Assistant context
+        setProjectContext(`${enhancedAnalysis.projectTitle}: ${enhancedAnalysis.projectDescription}`)
         
         setProjectModifications({
           title: enhancedAnalysis.projectTitle || "",
@@ -452,7 +458,8 @@ export default function AnalysisPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <SelectionTooltip>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -1192,5 +1199,6 @@ export default function AnalysisPage() {
         projectContext={analysis ? `${analysis.projectTitle}: ${analysis.projectDescription}` : undefined}
       />
     </div>
+    </SelectionTooltip>
   )
 }
