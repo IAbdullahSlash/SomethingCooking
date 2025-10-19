@@ -646,33 +646,23 @@ export default function AnalysisPage() {
   }
 
   useEffect(() => {
-    // Load cached analysis and stage data
-    const loadCachedData = () => {
-      const storedAnalysis = localStorage.getItem("projectAnalysis")
-      const storedStage = localStorage.getItem("currentStage")
+    // Clear all cached data on page load to always start fresh
+    const clearCachedData = () => {
+      localStorage.removeItem("projectAnalysis")
+      localStorage.removeItem("currentStage")
+      localStorage.removeItem("taskProgress")
       
-      if (storedAnalysis) {
-        const parsedAnalysis = JSON.parse(storedAnalysis)
-        const validatedAnalysis = validateAnalysisData(parsedAnalysis)
-        setAnalysis(validatedAnalysis)
-        setStageData(prev => ({ ...prev, stage1: validatedAnalysis }))
-        setProjectModifications({
-          title: validatedAnalysis.projectTitle || "",
-          description: validatedAnalysis.projectDescription || "",
-        })
-      }
-
-      if (storedStage) {
-        setCurrentStage(parseInt(storedStage) as AnalysisStage)
-      }
-
-      const storedProgress = localStorage.getItem("taskProgress")
-      if (storedProgress) {
-        setTaskProgress(JSON.parse(storedProgress))
-      }
+      // Reset to initial state
+      setAnalysis(null)
+      setCurrentStage(AnalysisStage.INPUT)
+      setTaskProgress({})
+      setProjectModifications({
+        title: "",
+        description: "",
+      })
     }
 
-    loadCachedData()
+    clearCachedData()
   }, [])
 
   // 🎨 STAGE RENDERING COMPONENTS
@@ -748,21 +738,15 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 1: Quick Snapshot */}
-        <Card className="border-2 border-blue-500 bg-blue-50/20">
+        <Card className="border-2 border-blue-500/50 bg-blue-500/5">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-2xl flex items-center gap-2">
                   <Zap className="w-6 h-6 text-blue-500" />
-                  Stage 1: Quick Snapshot
+                  IS IT WORTH IT?
                 </CardTitle>
-                <CardDescription className="text-lg">
-                  Fast "Is it worth it?" answer - {analysis.projectTitle}
-                </CardDescription>
               </div>
-              <Badge variant="default" className="text-lg px-4 py-2">
-                FREE
-              </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -774,17 +758,17 @@ export default function AnalysisPage() {
 
             {/* 3 High-Level Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-white rounded-lg border-2 border-blue-200">
+              <div className="text-center p-4 bg-card rounded-lg border-2 border-blue-500/30">
                 <div className={`text-4xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
                   {analysis.feasibilityScore}/10
                 </div>
                 <p className="text-sm font-semibold text-muted-foreground">Feasibility Score</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg border-2 border-green-200">
+              <div className="text-center p-4 bg-card rounded-lg border-2 border-green-500/30">
                 <div className="text-4xl font-bold text-green-500 mb-2">{analysis.successProbability}%</div>
                 <p className="text-sm font-semibold text-muted-foreground">Success Probability</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg border-2 border-purple-200">
+              <div className="text-center p-4 bg-card rounded-lg border-2 border-purple-500/30">
                 <div className="text-4xl font-bold text-purple-500 mb-2">{analysis.difficultyLevel}</div>
                 <p className="text-sm font-semibold text-muted-foreground">Difficulty Level</p>
               </div>
@@ -827,20 +811,20 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 2: Executive Summary */}
-        <Card className="border-2 border-green-500 bg-green-50/20">
+        <Card className="border-2 border-green-500/50 bg-green-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <FileText className="w-6 h-6 text-green-500" />
-              Stage 2: Executive Summary + Key Signals
+              Executive Summary
             </CardTitle>
             <CardDescription>
-              Useful guidance without technical depth - strategic overview
+              strategic overview
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Honest Feedback */}
             <div className="border-l-4 border-red-500 pl-4 bg-red-500/5 p-4 rounded-r-lg">
-              <h4 className="font-bold text-red-600 mb-3">Short Honest Feedback</h4>
+              <h4 className="font-bold text-red-600 mb-3">Honest Feedback</h4>
               <ul className="space-y-2 text-sm">
                 {analysis.honestAiFeedback.split('.').slice(0, 5).map((feedback, index) => (
                   feedback.trim() && (
@@ -894,7 +878,7 @@ export default function AnalysisPage() {
 
             {/* Target Users & Quick Wins */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-purple-500/5 p-4 rounded-lg border border-purple-200">
+              <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/30">
                 <h4 className="font-bold text-purple-600 mb-3 flex items-center gap-2">
                   <Target className="w-4 h-4" />
                   Target Users & Market
@@ -903,7 +887,7 @@ export default function AnalysisPage() {
                 <p className="text-sm"><strong>Market Demand:</strong> {analysis.targetUsersMarketFit?.marketDemand}</p>
               </div>
 
-              <div className="bg-blue-500/5 p-4 rounded-lg border border-blue-200">
+              <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/30">
                 <h4 className="font-bold text-blue-600 mb-3 flex items-center gap-2">
                   <Lightbulb className="w-4 h-4" />
                   Quick Wins
@@ -917,14 +901,14 @@ export default function AnalysisPage() {
             </div>
 
             {/* Expert Articles */}
-            <div className="bg-slate-500/5 p-4 rounded-lg border border-slate-200">
-              <h4 className="font-bold text-slate-600 mb-3 flex items-center gap-2">
+            <div className="bg-slate-500/10 p-4 rounded-lg border border-slate-500/30">
+              <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
                 What Experts Say
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stageData.stage2.expertArticles.map((article, index) => (
-                  <div key={index} className="border rounded p-3 bg-white">
+                  <div key={index} className="border rounded p-3 bg-card">
                     <h5 className="font-semibold text-sm mb-1">
                       <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         {article.title}
@@ -938,14 +922,14 @@ export default function AnalysisPage() {
             </div>
 
             {/* Existing Solutions */}
-            <div className="bg-orange-500/5 p-4 rounded-lg border border-orange-200">
-              <h4 className="font-bold text-orange-600 mb-3 flex items-center gap-2">
+            <div className="bg-orange-500/10 p-4 rounded-lg border border-orange-500/30">
+              <h4 className="font-bold text-orange-600 dark:text-orange-400 mb-3 flex items-center gap-2">
                 <ExternalLink className="w-4 h-4" />
                 Popular Existing Solutions
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stageData.stage2.existingSolutions.map((solution, index) => (
-                  <div key={index} className="border rounded p-3 bg-white">
+                  <div key={index} className="border rounded p-3 bg-card">
                     <h5 className="font-semibold text-sm mb-1">
                       <a href={solution.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         {solution.name}
@@ -959,14 +943,14 @@ export default function AnalysisPage() {
             </div>
 
             {/* GitHub Repositories */}
-            <div className="bg-gray-500/5 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-bold text-gray-600 mb-3 flex items-center gap-2">
+            <div className="bg-gray-500/10 p-4 rounded-lg border border-gray-500/30">
+              <h4 className="font-bold text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
                 <GitBranch className="w-4 h-4" />
                 Similar GitHub Projects
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stageData.stage2.githubRepos.slice(0, 4).map((repo, index) => (
-                  <div key={index} className="border rounded p-3 bg-white">
+                  <div key={index} className="border rounded p-3 bg-card">
                     <h5 className="font-semibold text-sm mb-1">
                       <a href={repo.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         {repo.owner}/{repo.name}
@@ -1010,7 +994,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 3: Roadmaps */}
-        <Card className="border-2 border-yellow-500 bg-yellow-50/20">
+        <Card className="border-2 border-yellow-500/50 bg-yellow-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <MapPin className="w-6 h-6 text-yellow-500" />
@@ -1028,9 +1012,9 @@ export default function AnalysisPage() {
                 Project Roadmap
               </h4>
               {stageData.stage3.projectMilestones.map((milestone, index) => (
-                <div key={index} className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
+                <div key={index} className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/10 p-4 rounded-r-lg">
                   <div className="flex justify-between items-start mb-2">
-                    <h5 className="font-semibold text-yellow-600">{milestone.phase}</h5>
+                    <h5 className="font-semibold text-yellow-600 dark:text-yellow-400">{milestone.phase}</h5>
                     <Badge variant="outline">{milestone.duration}</Badge>
                   </div>
                   <div className="space-y-2">
@@ -1058,12 +1042,12 @@ export default function AnalysisPage() {
 
             {/* SDLC Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-blue-500/5 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-bold text-blue-600 mb-3">SDLC Methodology</h4>
+              <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/30">
+                <h4 className="font-bold text-blue-600 dark:text-blue-400 mb-3">SDLC Methodology</h4>
                 <p className="text-sm">{stageData.stage3.sdlcMapping}</p>
               </div>
-              <div className="bg-green-500/5 p-4 rounded-lg border border-green-200">
-                <h4 className="font-bold text-green-600 mb-3">QA & Deployment</h4>
+              <div className="bg-green-500/10 p-4 rounded-lg border border-green-500/30">
+                <h4 className="font-bold text-green-600 dark:text-green-400 mb-3">QA & Deployment</h4>
                 <p className="text-sm">{stageData.stage3.qaApproach}</p>
               </div>
             </div>
@@ -1076,7 +1060,7 @@ export default function AnalysisPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stageData.stage3.teamRoles.map((role, index) => (
-                  <div key={index} className="border rounded p-4 bg-white">
+                  <div key={index} className="border rounded p-4 bg-card">
                     <div className="flex justify-between items-start mb-2">
                       <h5 className="font-semibold">{role.role}</h5>
                       <Badge variant="secondary">{role.fteEstimate} FTE</Badge>
@@ -1120,7 +1104,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 4: Technology Roadmap */}
-        <Card className="border-2 border-purple-500 bg-purple-50/20">
+        <Card className="border-2 border-purple-500/50 bg-purple-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Code className="w-6 h-6 text-purple-500" />
@@ -1135,9 +1119,9 @@ export default function AnalysisPage() {
             <div className="space-y-4">
               <h4 className="font-bold text-lg">Layered Technology Roadmap</h4>
               {stageData.stage4.techRoadmap.map((item, index) => (
-                <div key={index} className="border-l-4 border-purple-500 pl-4 bg-purple-500/5 p-4 rounded-r-lg">
+                <div key={index} className="border-l-4 border-purple-500 pl-4 bg-purple-500/10 p-4 rounded-r-lg">
                   <div className="flex justify-between items-start mb-2">
-                    <h5 className="font-semibold text-purple-600">{item.category}</h5>
+                    <h5 className="font-semibold text-purple-600 dark:text-purple-400">{item.category}</h5>
                     <div className="flex gap-2">
                       <Badge variant="outline">{item.timeline}</Badge>
                       <Badge variant="secondary">TRL {item.trl}/9</Badge>
@@ -1156,7 +1140,7 @@ export default function AnalysisPage() {
             <div className="space-y-4">
               <h4 className="font-bold text-lg">Version-Based Milestones</h4>
               {stageData.stage4.versionMilestones.map((version, index) => (
-                <div key={index} className="border rounded p-4 bg-white">
+                <div key={index} className="border rounded p-4 bg-card">
                   <div className="flex justify-between items-start mb-2">
                     <h5 className="font-semibold">{version.version}</h5>
                     <Badge variant="outline">{version.timeline}</Badge>
@@ -1181,7 +1165,7 @@ export default function AnalysisPage() {
                 Security & Compliance
               </h4>
               {stageData.stage4.securityConsiderations.map((security, index) => (
-                <div key={index} className="border rounded p-4 bg-white">
+                <div key={index} className="border rounded p-4 bg-card">
                   <h5 className="font-semibold mb-2">{security.area}</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -1215,7 +1199,7 @@ export default function AnalysisPage() {
                 Financial Cost Analysis
               </h4>
               {stageData.stage4.costEstimates.map((category, index) => (
-                <div key={index} className="border rounded p-4 bg-white">
+                <div key={index} className="border rounded p-4 bg-card">
                   <div className="flex justify-between items-start mb-3">
                     <h5 className="font-semibold">{category.category}</h5>
                     <Badge variant="secondary">{category.total}</Badge>
@@ -1263,7 +1247,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 5: Deep Resources */}
-        <Card className="border-2 border-red-500 bg-red-50/20">
+        <Card className="border-2 border-red-500/50 bg-red-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Briefcase className="w-6 h-6 text-red-500" />
@@ -1275,7 +1259,7 @@ export default function AnalysisPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Shareable Report */}
-            <div className="border rounded p-4 bg-white">
+            <div className="border rounded p-4 bg-card">
               <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <LinkIcon className="w-5 h-5" />
                 Shareable Idea Report
@@ -1300,7 +1284,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Freelancer Links */}
-            <div className="border rounded p-4 bg-white">
+            <div className="border rounded p-4 bg-card">
               <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 Find Expert Developers
@@ -1310,7 +1294,7 @@ export default function AnalysisPage() {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {stageData.stage5.freelancerLinks.map((link, index) => (
-                  <div key={index} className="border rounded p-3 text-center">
+                  <div key={index} className="border rounded p-3 text-center bg-card">
                     <h5 className="font-semibold mb-2">{link.platform}</h5>
                     <p className="text-xs text-muted-foreground mb-3">{link.description}</p>
                     <Button size="sm" asChild>
@@ -1324,7 +1308,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Jira Integration */}
-            <div className="border rounded p-4 bg-white opacity-50">
+            <div className="border rounded p-4 bg-card opacity-50">
               <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
                 Jira Integration
@@ -1338,7 +1322,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* SRS Document Generator */}
-            <div className="border rounded p-4 bg-white opacity-50">
+            <div className="border rounded p-4 bg-card opacity-50">
               <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <FileText className="w-5 h-5" />
                 AI-Generated SRS Document
@@ -1352,7 +1336,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Export Options */}
-            <div className="border rounded p-4 bg-white">
+            <div className="border rounded p-4 bg-card">
               <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <Download className="w-5 h-5" />
                 Export Complete Analysis
@@ -1527,9 +1511,9 @@ export default function AnalysisPage() {
   }
 
   const getRealityCheckColor = (score: number) => {
-    if (score >= 8) return "border-green-500 bg-green-50"
-    if (score >= 6) return "border-yellow-500 bg-yellow-50"
-    return "border-red-500 bg-red-50"
+    if (score >= 8) return "border-green-500 bg-green-500/10"
+    if (score >= 6) return "border-yellow-500 bg-yellow-500/10"
+    return "border-red-500 bg-red-500/10"
   }
 
   // 🔥 STAGE DATA GENERATORS
