@@ -25,10 +25,36 @@ import {
   TrendingUp,
   ArrowRight,
   MessageCircle,
+  Play,
+  Unlock,
+  Shield,
+  Clock,
+  Users,
+  Target,
+  FileText,
+  ExternalLink,
+  Star,
+  GitBranch,
+  BarChart3,
+  MapPin,
+  DollarSign,
+  Link as LinkIcon,
+  Briefcase,
+  BookOpen,
 } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { AIAssistantChat } from "@/components/AIAssistantChat"
+
+// 🚀 STAGE DEFINITIONS
+enum AnalysisStage {
+  INPUT = 0,
+  QUICK_SNAPSHOT = 1,
+  EXECUTIVE_SUMMARY = 2,
+  ROADMAPS = 3,
+  TECH_ROADMAP = 4,
+  DEEP_RESOURCES = 5
+}
 
 // ✨ Shimmer loader for "Analyzing..." state
 function ShimmerLoader() {
@@ -42,6 +68,51 @@ function ShimmerLoader() {
       <div className="h-6 bg-muted rounded w-2/3 mx-auto" />
       <div className="h-6 bg-muted rounded w-1/2 mx-auto" />
       <div className="h-32 bg-muted rounded" />
+    </div>
+  )
+}
+
+// 🎯 Stage Progress Component
+function StageProgress({ currentStage }: { currentStage: number }) {
+  const stages = [
+    { name: "Quick Snapshot", icon: Zap },
+    { name: "Executive Summary", icon: FileText },
+    { name: "Roadmaps", icon: MapPin },
+    { name: "Tech Stack", icon: Code },
+    { name: "Deep Resources", icon: Briefcase }
+  ]
+
+  return (
+    <div className="flex items-center justify-center space-x-2 mb-6">
+      {stages.map((stage, index) => {
+        const StageIcon = stage.icon
+        const isCompleted = index < currentStage - 1
+        const isCurrent = index === currentStage - 1
+        const isLocked = index >= currentStage
+
+        return (
+          <div key={index} className="flex items-center">
+            <div className={`
+              flex items-center justify-center w-10 h-10 rounded-full border-2
+              ${isCompleted ? 'bg-green-500 border-green-500 text-white' : ''}
+              ${isCurrent ? 'bg-blue-500 border-blue-500 text-white' : ''}
+              ${isLocked ? 'bg-muted border-muted-foreground/20 text-muted-foreground' : ''}
+            `}>
+              {isCompleted ? (
+                <CheckCircle className="w-5 h-5" />
+              ) : (
+                <StageIcon className="w-5 h-5" />
+              )}
+            </div>
+            <span className={`text-xs ml-2 ${isLocked ? 'text-muted-foreground' : ''}`}>
+              {stage.name}
+            </span>
+            {index < stages.length - 1 && (
+              <div className={`w-8 h-0.5 mx-2 ${isCompleted || (isCurrent && index < currentStage - 1) ? 'bg-green-500' : 'bg-muted'}`} />
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -103,6 +174,67 @@ interface AnalysisData {
   }
 }
 
+// 🚀 NEW INTERFACES FOR STAGED DATA
+interface ExpertArticle {
+  title: string
+  url: string
+  source: string
+  summary: string
+}
+
+interface ExistingSolution {
+  name: string
+  url: string
+  description: string
+  category: string
+}
+
+interface QuickWin {
+  title: string
+  description: string
+  timeEstimate: string
+}
+
+interface TeamRole {
+  role: string
+  fteEstimate: number
+  skills: string[]
+  description: string
+}
+
+interface ProjectMilestone {
+  phase: string
+  deliverables: string[]
+  duration: string
+  dependencies: string[]
+}
+
+interface TechRoadmapItem {
+  category: "Infrastructure" | "Dev Stack" | "Integrations" | "Testing" | "Scalability"
+  technologies: string[]
+  timeline: string
+  trl: number // Tech Readiness Level 1-9
+}
+
+interface SecurityConsideration {
+  area: string
+  requirements: string[]
+  compliance: string[]
+}
+
+interface CostEstimate {
+  category: string
+  items: { name: string; cost: string; justification: string }[]
+  total: string
+}
+
+interface VersionMilestone {
+  version: string
+  features: string[]
+  timeline: string
+  description: string
+}
+
 interface GitHubRepo {
   name: string
   description: string
@@ -118,6 +250,36 @@ interface TaskProgress {
 }
 
 export default function AnalysisPage() {
+  // 🚀 STAGED ANALYSIS STATE
+  const [currentStage, setCurrentStage] = useState<AnalysisStage>(AnalysisStage.INPUT)
+  const [stageData, setStageData] = useState<{
+    stage1?: AnalysisData
+    stage2?: {
+      quickWins: QuickWin[]
+      expertArticles: ExpertArticle[]
+      existingSolutions: ExistingSolution[]
+      githubRepos: GitHubRepo[]
+    }
+    stage3?: {
+      projectMilestones: ProjectMilestone[]
+      teamRoles: TeamRole[]
+      sdlcMapping: string
+      qaApproach: string
+    }
+    stage4?: {
+      techRoadmap: TechRoadmapItem[]
+      versionMilestones: VersionMilestone[]
+      securityConsiderations: SecurityConsideration[]
+      costEstimates: CostEstimate[]
+    }
+    stage5?: {
+      jiraIntegration: boolean
+      shareableLink: string
+      freelancerLinks: any[]
+      srsDocument: any
+    }
+  }>({})
+
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null)
   const [loading, setLoading] = useState(false)
   const [taskProgress, setTaskProgress] = useState<TaskProgress>({})
@@ -218,16 +380,19 @@ export default function AnalysisPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setGithubRepos(data.repositories || [])
+        const repos = data.repositories || []
+        setGithubRepos(repos)
+        return repos
       }
     } catch (error) {
       console.error("Failed to fetch GitHub repositories:", error)
     } finally {
       setGithubLoading(false)
     }
+    return []
   }
 
-  // Updated function to handle form submission with only idea description
+  // 🚀 STAGE 1: QUICK SNAPSHOT
   const handleAnalyzeIdea = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     
@@ -258,7 +423,9 @@ export default function AnalysisPage() {
         }
 
         setAnalysis(enhancedAnalysis)
+        setStageData(prev => ({ ...prev, stage1: enhancedAnalysis }))
         localStorage.setItem("projectAnalysis", JSON.stringify(enhancedAnalysis))
+        localStorage.setItem("currentStage", AnalysisStage.QUICK_SNAPSHOT.toString())
         
         // Update AI Assistant context
         setProjectContext(`${enhancedAnalysis.projectTitle}: ${enhancedAnalysis.projectDescription}`)
@@ -268,7 +435,8 @@ export default function AnalysisPage() {
           description: enhancedAnalysis.projectDescription || "",
         })
         
-        fetchGitHubRepos(formData.idea)
+        // Move to Stage 1
+        setCurrentStage(AnalysisStage.QUICK_SNAPSHOT)
       } else {
         const errorText = await response.text()
         console.error("[Analysis] API call failed:", errorText)
@@ -282,22 +450,220 @@ export default function AnalysisPage() {
     }
   }
 
+  // 🚀 STAGE PROGRESSION FUNCTIONS
+  const proceedToStage = async (targetStage: AnalysisStage) => {
+    if (!analysis) return
+
+    setLoading(true)
+    try {
+      switch (targetStage) {
+        case AnalysisStage.EXECUTIVE_SUMMARY:
+          await loadStage2Data()
+          break
+        case AnalysisStage.ROADMAPS:
+          await loadStage3Data()
+          break
+        case AnalysisStage.TECH_ROADMAP:
+          await loadStage4Data()
+          break
+        case AnalysisStage.DEEP_RESOURCES:
+          await loadStage5Data()
+          break
+      }
+      setCurrentStage(targetStage)
+      localStorage.setItem("currentStage", targetStage.toString())
+    } catch (error) {
+      console.error(`Failed to load stage ${targetStage}:`, error)
+      alert("Failed to load next stage. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 🔥 STAGE 2: Load Executive Summary Data
+  const loadStage2Data = async () => {
+    try {
+      const response = await fetch("/api/stage-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: 2, analysis, idea: formData.idea }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const repos = await fetchGitHubRepos(analysis?.projectTitle || formData.idea)
+        
+        setStageData(prev => ({
+          ...prev,
+          stage2: { ...data, githubRepos: repos }
+        }))
+      } else {
+        // Fallback to local generation
+        const [quickWins, expertArticles, existingSolutions, repos] = await Promise.all([
+          generateQuickWins(),
+          fetchExpertArticles(),
+          fetchExistingSolutions(),
+          fetchGitHubRepos(analysis?.projectTitle || formData.idea)
+        ])
+
+        setStageData(prev => ({
+          ...prev,
+          stage2: { quickWins, expertArticles, existingSolutions, githubRepos: repos }
+        }))
+      }
+    } catch (error) {
+      console.error("Failed to load Stage 2 data:", error)
+      // Fallback to local generation
+      const [quickWins, expertArticles, existingSolutions, repos] = await Promise.all([
+        generateQuickWins(),
+        fetchExpertArticles(),
+        fetchExistingSolutions(),
+        fetchGitHubRepos(analysis?.projectTitle || formData.idea)
+      ])
+
+      setStageData(prev => ({
+        ...prev,
+        stage2: { quickWins, expertArticles, existingSolutions, githubRepos: repos }
+      }))
+    }
+  }
+
+  // 🔥 STAGE 3: Load Roadmaps Data
+  const loadStage3Data = async () => {
+    try {
+      const response = await fetch("/api/stage-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: 3, analysis }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setStageData(prev => ({ ...prev, stage3: data }))
+      } else {
+        // Fallback to local generation
+        const projectMilestones = generateProjectMilestones()
+        const teamRoles = generateTeamRoles()
+        const sdlcMapping = generateSDLCMapping()
+        const qaApproach = generateQAApproach()
+
+        setStageData(prev => ({
+          ...prev,
+          stage3: { projectMilestones, teamRoles, sdlcMapping, qaApproach }
+        }))
+      }
+    } catch (error) {
+      console.error("Failed to load Stage 3 data:", error)
+      // Fallback to local generation
+      const projectMilestones = generateProjectMilestones()
+      const teamRoles = generateTeamRoles()
+      const sdlcMapping = generateSDLCMapping()
+      const qaApproach = generateQAApproach()
+
+      setStageData(prev => ({
+        ...prev,
+        stage3: { projectMilestones, teamRoles, sdlcMapping, qaApproach }
+      }))
+    }
+  }
+
+  // 🔥 STAGE 4: Load Technology Roadmap Data
+  const loadStage4Data = async () => {
+    try {
+      const response = await fetch("/api/stage-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: 4, analysis }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setStageData(prev => ({ ...prev, stage4: data }))
+      } else {
+        // Fallback to local generation
+        const techRoadmap = generateTechRoadmap()
+        const versionMilestones = generateVersionMilestones()
+        const securityConsiderations = generateSecurityConsiderations()
+        const costEstimates = generateCostEstimates()
+
+        setStageData(prev => ({
+          ...prev,
+          stage4: { techRoadmap, versionMilestones, securityConsiderations, costEstimates }
+        }))
+      }
+    } catch (error) {
+      console.error("Failed to load Stage 4 data:", error)
+      // Fallback to local generation
+      const techRoadmap = generateTechRoadmap()
+      const versionMilestones = generateVersionMilestones()
+      const securityConsiderations = generateSecurityConsiderations()
+      const costEstimates = generateCostEstimates()
+
+      setStageData(prev => ({
+        ...prev,
+        stage4: { techRoadmap, versionMilestones, securityConsiderations, costEstimates }
+      }))
+    }
+  }
+
+  // 🔥 STAGE 5: Load Deep Resources Data  
+  const loadStage5Data = async () => {
+    try {
+      const response = await fetch("/api/stage-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: 5, analysis }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setStageData(prev => ({ ...prev, stage5: data }))
+      } else {
+        // Fallback to local generation
+        const jiraIntegration = false
+        const shareableLink = generateShareableLink()
+        const freelancerLinks = generateFreelancerLinks()
+        const srsDocument = null
+
+        setStageData(prev => ({
+          ...prev,
+          stage5: { jiraIntegration, shareableLink, freelancerLinks, srsDocument }
+        }))
+      }
+    } catch (error) {
+      console.error("Failed to load Stage 5 data:", error)
+      // Fallback to local generation
+      const jiraIntegration = false
+      const shareableLink = generateShareableLink()
+      const freelancerLinks = generateFreelancerLinks()
+      const srsDocument = null
+
+      setStageData(prev => ({
+        ...prev,
+        stage5: { jiraIntegration, shareableLink, freelancerLinks, srsDocument }
+      }))
+    }
+  }
+
   useEffect(() => {
-    // Only load cached analysis and task progress on mount
+    // Load cached analysis and stage data
     const loadCachedData = () => {
       const storedAnalysis = localStorage.getItem("projectAnalysis")
+      const storedStage = localStorage.getItem("currentStage")
+      
       if (storedAnalysis) {
         const parsedAnalysis = JSON.parse(storedAnalysis)
-        // 🔧 Apply validation to cached data too
         const validatedAnalysis = validateAnalysisData(parsedAnalysis)
         setAnalysis(validatedAnalysis)
+        setStageData(prev => ({ ...prev, stage1: validatedAnalysis }))
         setProjectModifications({
           title: validatedAnalysis.projectTitle || "",
           description: validatedAnalysis.projectDescription || "",
         })
-        if (validatedAnalysis.projectTitle) {
-          fetchGitHubRepos(validatedAnalysis.projectTitle)
-        }
+      }
+
+      if (storedStage) {
+        setCurrentStage(parseInt(storedStage) as AnalysisStage)
       }
 
       const storedProgress = localStorage.getItem("taskProgress")
@@ -308,6 +674,709 @@ export default function AnalysisPage() {
 
     loadCachedData()
   }, [])
+
+  // 🎨 STAGE RENDERING COMPONENTS
+  const renderStageContent = () => {
+    switch (currentStage) {
+      case AnalysisStage.INPUT:
+        return renderInputStage()
+      case AnalysisStage.QUICK_SNAPSHOT:
+        return renderQuickSnapshot()
+      case AnalysisStage.EXECUTIVE_SUMMARY:
+        return renderExecutiveSummary()
+      case AnalysisStage.ROADMAPS:
+        return renderRoadmaps()
+      case AnalysisStage.TECH_ROADMAP:
+        return renderTechRoadmap()
+      case AnalysisStage.DEEP_RESOURCES:
+        return renderDeepResources()
+      default:
+        return renderInputStage()
+    }
+  }
+
+  const renderInputStage = () => (
+    <Card className="shadow-2xl border-2">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="text-2xl">Analyze Your Project Idea</CardTitle>
+        <CardDescription>
+          Describe your project concept - our AI will provide progressive analysis across 5 detailed stages
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <form onSubmit={handleAnalyzeIdea} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="project-idea">Project Idea</Label>
+            <Textarea
+              id="project-idea"
+              placeholder="Describe your project idea in detail... (e.g., A mobile app that helps students find study groups with location-based matching and real-time chat features)"
+              className="min-h-32 text-base"
+              value={formData.idea}
+              onChange={(e) => setFormData(prev => ({ ...prev, idea: e.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground">
+              💡 Tip: Be specific about features, target users, and technical requirements for better analysis
+            </p>
+          </div>
+
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full text-lg py-6"
+            disabled={!formData.idea.trim() || analyzing}
+          >
+            {analyzing ? (
+              <>
+                <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                Analyzing Your Idea...
+              </>
+            ) : (
+              <>
+                Start 5-Stage Analysis
+                <Play className="ml-2 w-5 h-5" />
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+
+  const renderQuickSnapshot = () => {
+    if (!analysis) return null
+
+    return (
+      <div className="space-y-6">
+        {/* Stage 1: Quick Snapshot */}
+        <Card className="border-2 border-blue-500 bg-blue-50/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Zap className="w-6 h-6 text-blue-500" />
+                  Stage 1: Quick Snapshot
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  Fast "Is it worth it?" answer - {analysis.projectTitle}
+                </CardDescription>
+              </div>
+              <Badge variant="default" className="text-lg px-4 py-2">
+                FREE
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Project Title & Description */}
+            <div className="text-center">
+              <h3 className="text-xl font-bold mb-2">{analysis.projectTitle}</h3>
+              <p className="text-muted-foreground">{analysis.projectDescription}</p>
+            </div>
+
+            {/* 3 High-Level Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-white rounded-lg border-2 border-blue-200">
+                <div className={`text-4xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
+                  {analysis.feasibilityScore}/10
+                </div>
+                <p className="text-sm font-semibold text-muted-foreground">Feasibility Score</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border-2 border-green-200">
+                <div className="text-4xl font-bold text-green-500 mb-2">{analysis.successProbability}%</div>
+                <p className="text-sm font-semibold text-muted-foreground">Success Probability</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border-2 border-purple-200">
+                <div className="text-4xl font-bold text-purple-500 mb-2">{analysis.difficultyLevel}</div>
+                <p className="text-sm font-semibold text-muted-foreground">Difficulty Level</p>
+              </div>
+            </div>
+
+            {/* Reality Check */}
+            <div className={`p-4 rounded-lg border-2 ${getRealityCheckColor(analysis.feasibilityScore)}`}>
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Honest Reality Check
+              </h4>
+              <p className="text-sm leading-relaxed">{analysis.honestAiFeedback}</p>
+            </div>
+
+            {/* CTA */}
+            <div className="text-center pt-4">
+              <Button
+                size="lg"
+                onClick={() => proceedToStage(AnalysisStage.EXECUTIVE_SUMMARY)}
+                disabled={loading}
+                className="text-lg px-8 py-4"
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                ) : (
+                  <Unlock className="mr-2 w-5 h-5" />
+                )}
+                Proceed to Executive Summary
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const renderExecutiveSummary = () => {
+    if (!analysis || !stageData.stage2) return null
+
+    return (
+      <div className="space-y-6">
+        {/* Stage 2: Executive Summary */}
+        <Card className="border-2 border-green-500 bg-green-50/20">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <FileText className="w-6 h-6 text-green-500" />
+              Stage 2: Executive Summary + Key Signals
+            </CardTitle>
+            <CardDescription>
+              Useful guidance without technical depth - strategic overview
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Honest Feedback */}
+            <div className="border-l-4 border-red-500 pl-4 bg-red-500/5 p-4 rounded-r-lg">
+              <h4 className="font-bold text-red-600 mb-3">Short Honest Feedback</h4>
+              <ul className="space-y-2 text-sm">
+                {analysis.honestAiFeedback.split('.').slice(0, 5).map((feedback, index) => (
+                  feedback.trim() && (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-red-500 font-bold">•</span>
+                      {feedback.trim()}
+                    </li>
+                  )
+                ))}
+              </ul>
+            </div>
+
+            {/* Key Strengths and Challenges */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border-l-4 border-green-500 pl-4 bg-green-500/5 p-4 rounded-r-lg">
+                <h4 className="font-bold text-green-600 mb-3">Key Strengths</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-500 font-bold">✓</span>
+                    <div>
+                      <strong>Value Proposition:</strong> {analysis.keyStrengths?.valueProposition}
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-500 font-bold">✓</span>
+                    <div>
+                      <strong>Market Fit:</strong> {analysis.keyStrengths?.marketFit}
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
+                <h4 className="font-bold text-yellow-600 mb-3">Potential Challenges</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-500 font-bold">⚠</span>
+                    <div>
+                      <strong>Technical:</strong> {analysis.potentialChallenges?.technicalRisks}
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-500 font-bold">⚠</span>
+                    <div>
+                      <strong>Market:</strong> {analysis.potentialChallenges?.marketRisks}
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Target Users & Quick Wins */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-purple-500/5 p-4 rounded-lg border border-purple-200">
+                <h4 className="font-bold text-purple-600 mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Target Users & Market
+                </h4>
+                <p className="text-sm mb-2"><strong>Primary Users:</strong> {analysis.targetUsersMarketFit?.primaryUsers}</p>
+                <p className="text-sm"><strong>Market Demand:</strong> {analysis.targetUsersMarketFit?.marketDemand}</p>
+              </div>
+
+              <div className="bg-blue-500/5 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-bold text-blue-600 mb-3 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4" />
+                  Quick Wins
+                </h4>
+                {stageData.stage2.quickWins.map((win, index) => (
+                  <div key={index} className="mb-2 text-sm">
+                    <strong>{win.title}:</strong> {win.description} ({win.timeEstimate})
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Expert Articles */}
+            <div className="bg-slate-500/5 p-4 rounded-lg border border-slate-200">
+              <h4 className="font-bold text-slate-600 mb-3 flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                What Experts Say
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {stageData.stage2.expertArticles.map((article, index) => (
+                  <div key={index} className="border rounded p-3 bg-white">
+                    <h5 className="font-semibold text-sm mb-1">
+                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {article.title}
+                      </a>
+                    </h5>
+                    <p className="text-xs text-muted-foreground mb-1">{article.source}</p>
+                    <p className="text-xs">{article.summary}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Existing Solutions */}
+            <div className="bg-orange-500/5 p-4 rounded-lg border border-orange-200">
+              <h4 className="font-bold text-orange-600 mb-3 flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Popular Existing Solutions
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {stageData.stage2.existingSolutions.map((solution, index) => (
+                  <div key={index} className="border rounded p-3 bg-white">
+                    <h5 className="font-semibold text-sm mb-1">
+                      <a href={solution.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {solution.name}
+                      </a>
+                    </h5>
+                    <Badge variant="outline" className="text-xs mb-2">{solution.category}</Badge>
+                    <p className="text-xs">{solution.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* GitHub Repositories */}
+            <div className="bg-gray-500/5 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-bold text-gray-600 mb-3 flex items-center gap-2">
+                <GitBranch className="w-4 h-4" />
+                Similar GitHub Projects
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {stageData.stage2.githubRepos.slice(0, 4).map((repo, index) => (
+                  <div key={index} className="border rounded p-3 bg-white">
+                    <h5 className="font-semibold text-sm mb-1">
+                      <a href={repo.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {repo.owner}/{repo.name}
+                      </a>
+                    </h5>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                      <Badge variant="outline">{repo.language}</Badge>
+                      <span>⭐ {repo.stars.toLocaleString()}</span>
+                    </div>
+                    <p className="text-xs">{repo.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="text-center pt-4">
+              <Button
+                size="lg"
+                onClick={() => proceedToStage(AnalysisStage.ROADMAPS)}
+                disabled={loading}
+                className="text-lg px-8 py-4"
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                ) : (
+                  <ArrowRight className="mr-2 w-5 h-5" />
+                )}
+                Still Interested? Proceed to Roadmaps
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const renderRoadmaps = () => {
+    if (!analysis || !stageData.stage3) return null
+
+    return (
+      <div className="space-y-6">
+        {/* Stage 3: Roadmaps */}
+        <Card className="border-2 border-yellow-500 bg-yellow-50/20">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <MapPin className="w-6 h-6 text-yellow-500" />
+              Stage 3: Project Roadmap + SDLC Summary
+            </CardTitle>
+            <CardDescription>
+              Execution plan and development flow tied to SDLC methodology
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Project Milestones */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Project Roadmap
+              </h4>
+              {stageData.stage3.projectMilestones.map((milestone, index) => (
+                <div key={index} className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <h5 className="font-semibold text-yellow-600">{milestone.phase}</h5>
+                    <Badge variant="outline">{milestone.duration}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <strong className="text-sm">Deliverables:</strong>
+                      <ul className="text-sm mt-1">
+                        {milestone.deliverables.map((deliverable, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-yellow-500">•</span>
+                            {deliverable}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {milestone.dependencies.length > 0 && (
+                      <div>
+                        <strong className="text-sm">Dependencies:</strong>
+                        <span className="text-sm ml-2">{milestone.dependencies.join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* SDLC Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-blue-500/5 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-bold text-blue-600 mb-3">SDLC Methodology</h4>
+                <p className="text-sm">{stageData.stage3.sdlcMapping}</p>
+              </div>
+              <div className="bg-green-500/5 p-4 rounded-lg border border-green-200">
+                <h4 className="font-bold text-green-600 mb-3">QA & Deployment</h4>
+                <p className="text-sm">{stageData.stage3.qaApproach}</p>
+              </div>
+            </div>
+
+            {/* Team Roles */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-lg flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Suggested Team Roles & FTE Estimates
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {stageData.stage3.teamRoles.map((role, index) => (
+                  <div key={index} className="border rounded p-4 bg-white">
+                    <div className="flex justify-between items-start mb-2">
+                      <h5 className="font-semibold">{role.role}</h5>
+                      <Badge variant="secondary">{role.fteEstimate} FTE</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{role.description}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {role.skills.map((skill, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">{skill}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="text-center pt-4">
+              <Button
+                size="lg"
+                onClick={() => proceedToStage(AnalysisStage.TECH_ROADMAP)}
+                disabled={loading}
+                className="text-lg px-8 py-4"
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                ) : (
+                  <Code className="mr-2 w-5 h-5" />
+                )}
+                Ready for Technical Details?
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const renderTechRoadmap = () => {
+    if (!analysis || !stageData.stage4) return null
+
+    return (
+      <div className="space-y-6">
+        {/* Stage 4: Technology Roadmap */}
+        <Card className="border-2 border-purple-500 bg-purple-50/20">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Code className="w-6 h-6 text-purple-500" />
+              Stage 4: Technology Roadmap & Stack
+            </CardTitle>
+            <CardDescription>
+              Technical path, readiness advice, and cost analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Tech Roadmap */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-lg">Layered Technology Roadmap</h4>
+              {stageData.stage4.techRoadmap.map((item, index) => (
+                <div key={index} className="border-l-4 border-purple-500 pl-4 bg-purple-500/5 p-4 rounded-r-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <h5 className="font-semibold text-purple-600">{item.category}</h5>
+                    <div className="flex gap-2">
+                      <Badge variant="outline">{item.timeline}</Badge>
+                      <Badge variant="secondary">TRL {item.trl}/9</Badge>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {item.technologies.map((tech, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">{tech}</Badge>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Version Milestones */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-lg">Version-Based Milestones</h4>
+              {stageData.stage4.versionMilestones.map((version, index) => (
+                <div key={index} className="border rounded p-4 bg-white">
+                  <div className="flex justify-between items-start mb-2">
+                    <h5 className="font-semibold">{version.version}</h5>
+                    <Badge variant="outline">{version.timeline}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{version.description}</p>
+                  <div className="space-y-1">
+                    {version.features.map((feature, idx) => (
+                      <div key={idx} className="text-sm flex items-start gap-2">
+                        <span className="text-purple-500">•</span>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Security Considerations */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-lg flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Security & Compliance
+              </h4>
+              {stageData.stage4.securityConsiderations.map((security, index) => (
+                <div key={index} className="border rounded p-4 bg-white">
+                  <h5 className="font-semibold mb-2">{security.area}</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <strong className="text-sm">Requirements:</strong>
+                      <ul className="text-sm mt-1">
+                        {security.requirements.map((req, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-red-500">•</span>
+                            {req}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <strong className="text-sm">Compliance:</strong>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {security.compliance.map((comp, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">{comp}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Cost Estimates */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-lg flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Financial Cost Analysis
+              </h4>
+              {stageData.stage4.costEstimates.map((category, index) => (
+                <div key={index} className="border rounded p-4 bg-white">
+                  <div className="flex justify-between items-start mb-3">
+                    <h5 className="font-semibold">{category.category}</h5>
+                    <Badge variant="secondary">{category.total}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {category.items.map((item, idx) => (
+                      <div key={idx} className="text-sm">
+                        <div className="flex justify-between items-start">
+                          <strong>{item.name}</strong>
+                          <span className="text-muted-foreground">{item.cost}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{item.justification}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div className="text-center pt-4">
+              <Button
+                size="lg"
+                onClick={() => proceedToStage(AnalysisStage.DEEP_RESOURCES)}
+                disabled={loading}
+                className="text-lg px-8 py-4"
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                ) : (
+                  <Briefcase className="mr-2 w-5 h-5" />
+                )}
+                Access Deep Resources & Tools
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const renderDeepResources = () => {
+    if (!analysis || !stageData.stage5) return null
+
+    return (
+      <div className="space-y-6">
+        {/* Stage 5: Deep Resources */}
+        <Card className="border-2 border-red-500 bg-red-50/20">
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Briefcase className="w-6 h-6 text-red-500" />
+              Stage 5: Deep Resources & Interactive Tools
+            </CardTitle>
+            <CardDescription>
+              Practical handoff to execution - Premium features
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Shareable Report */}
+            <div className="border rounded p-4 bg-white">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <LinkIcon className="w-5 h-5" />
+                Shareable Idea Report
+              </h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Get a permanent link to access this analysis from anywhere
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={stageData.stage5.shareableLink}
+                  readOnly
+                  className="flex-1 px-3 py-2 border rounded text-sm bg-muted"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => navigator.clipboard.writeText(stageData.stage5.shareableLink)}
+                >
+                  Copy Link
+                </Button>
+              </div>
+            </div>
+
+            {/* Freelancer Links */}
+            <div className="border rounded p-4 bg-white">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Find Expert Developers
+              </h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Connect with freelance experts in your project domain
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {stageData.stage5.freelancerLinks.map((link, index) => (
+                  <div key={index} className="border rounded p-3 text-center">
+                    <h5 className="font-semibold mb-2">{link.platform}</h5>
+                    <p className="text-xs text-muted-foreground mb-3">{link.description}</p>
+                    <Button size="sm" asChild>
+                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        Browse Experts
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Jira Integration */}
+            <div className="border rounded p-4 bg-white opacity-50">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Jira Integration
+              </h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Connect directly with Jira to work on pre-built roadmap
+              </p>
+              <Button disabled size="sm">
+                Coming Soon - Connect to Jira
+              </Button>
+            </div>
+
+            {/* SRS Document Generator */}
+            <div className="border rounded p-4 bg-white opacity-50">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                AI-Generated SRS Document
+              </h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Generate an IEEE standard Software Requirements Specification
+              </p>
+              <Button disabled size="sm">
+                Coming Soon - Generate SRS
+              </Button>
+            </div>
+
+            {/* Export Options */}
+            <div className="border rounded p-4 bg-white">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                Export Complete Analysis
+              </h4>
+              <div className="flex gap-2">
+                <Button
+                  onClick={exportToPDF}
+                  disabled={exportLoading}
+                  className="flex items-center gap-2"
+                >
+                  {exportLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  Download PDF Report
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const exportToPDF = async () => {
     if (!analysis) return
@@ -457,6 +1526,205 @@ export default function AnalysisPage() {
     return { variant: "destructive" as const, text: "Challenging" }
   }
 
+  const getRealityCheckColor = (score: number) => {
+    if (score >= 8) return "border-green-500 bg-green-50"
+    if (score >= 6) return "border-yellow-500 bg-yellow-50"
+    return "border-red-500 bg-red-50"
+  }
+
+  // 🔥 STAGE DATA GENERATORS
+  const generateQuickWins = async (): Promise<QuickWin[]> => {
+    if (!analysis) return []
+    return [
+      {
+        title: "Start with MVP",
+        description: "Focus on core features first to validate the concept",
+        timeEstimate: "1-2 weeks"
+      },
+      {
+        title: "User Research",
+        description: "Conduct interviews with 5-10 potential users",
+        timeEstimate: "3-5 days"
+      }
+    ]
+  }
+
+  const fetchExpertArticles = async (): Promise<ExpertArticle[]> => {
+    // Mock data - in real implementation, this would call an API
+    return [
+      {
+        title: "Building Scalable Web Applications",
+        url: "https://example.com/article1",
+        source: "Tech Insights",
+        summary: "Key principles for building scalable applications"
+      },
+      {
+        title: "User Experience Best Practices",
+        url: "https://example.com/article2",
+        source: "UX Magazine",
+        summary: "Essential UX guidelines for modern applications"
+      }
+    ]
+  }
+
+  const fetchExistingSolutions = async (): Promise<ExistingSolution[]> => {
+    if (!analysis) return []
+    return [
+      {
+        name: "Similar Platform A",
+        url: "https://example.com/platform-a",
+        description: "Popular solution in the same domain",
+        category: "Direct Competitor"
+      },
+      {
+        name: "Related Tool B",
+        url: "https://example.com/tool-b",
+        description: "Complementary tool that addresses similar needs",
+        category: "Indirect Competitor"
+      }
+    ]
+  }
+
+  const generateProjectMilestones = (): ProjectMilestone[] => {
+    return [
+      {
+        phase: "Initiation",
+        deliverables: ["Project charter", "Stakeholder analysis", "Initial requirements"],
+        duration: "1-2 weeks",
+        dependencies: []
+      },
+      {
+        phase: "Planning",
+        deliverables: ["Detailed requirements", "Technical design", "Project plan"],
+        duration: "2-3 weeks",
+        dependencies: ["Initiation"]
+      },
+      {
+        phase: "Execution",
+        deliverables: ["MVP development", "Testing", "User feedback"],
+        duration: "6-8 weeks",
+        dependencies: ["Planning"]
+      }
+    ]
+  }
+
+  const generateTeamRoles = (): TeamRole[] => {
+    return [
+      {
+        role: "Frontend Developer",
+        fteEstimate: 1,
+        skills: ["React", "TypeScript", "CSS"],
+        description: "Responsible for user interface development"
+      },
+      {
+        role: "Backend Developer",
+        fteEstimate: 1,
+        skills: ["Node.js", "Database design", "API development"],
+        description: "Handles server-side logic and database"
+      }
+    ]
+  }
+
+  const generateSDLCMapping = (): string => {
+    return "Agile methodology with 2-week sprints, continuous integration, and regular stakeholder feedback"
+  }
+
+  const generateQAApproach = (): string => {
+    return "Automated testing with Jest/Cypress, manual testing for UX, and staged deployment with rollback capabilities"
+  }
+
+  const generateTechRoadmap = (): TechRoadmapItem[] => {
+    return [
+      {
+        category: "Infrastructure",
+        technologies: ["AWS/Vercel", "Docker", "CI/CD"],
+        timeline: "Week 1-2",
+        trl: 8
+      },
+      {
+        category: "Dev Stack",
+        technologies: ["React", "Node.js", "PostgreSQL"],
+        timeline: "Week 2-6",
+        trl: 9
+      }
+    ]
+  }
+
+  const generateVersionMilestones = (): VersionMilestone[] => {
+    return [
+      {
+        version: "v0.1 (MVP)",
+        features: ["Core functionality", "Basic UI", "User authentication"],
+        timeline: "Month 1-2",
+        description: "Minimum viable product for initial testing"
+      },
+      {
+        version: "v1.0 (Launch)",
+        features: ["Full feature set", "Polished UI", "Performance optimization"],
+        timeline: "Month 3-4",
+        description: "Production-ready version"
+      }
+    ]
+  }
+
+  const generateSecurityConsiderations = (): SecurityConsideration[] => {
+    return [
+      {
+        area: "Authentication",
+        requirements: ["JWT tokens", "Password hashing", "Session management"],
+        compliance: ["GDPR", "Data encryption"]
+      }
+    ]
+  }
+
+  const generateCostEstimates = (): CostEstimate[] => {
+    return [
+      {
+        category: "Development",
+        items: [
+          { name: "Developer salaries", cost: "$8,000-12,000/month", justification: "2 developers for 3-4 months" },
+          { name: "Design tools", cost: "$100-200/month", justification: "Figma Pro, Adobe Creative Suite" }
+        ],
+        total: "$25,000-50,000"
+      },
+      {
+        category: "Infrastructure",
+        items: [
+          { name: "Cloud hosting", cost: "$50-200/month", justification: "AWS/Vercel for hosting and storage" },
+          { name: "Third-party APIs", cost: "$100-500/month", justification: "Payment processing, analytics" }
+        ],
+        total: "$600-2,400/year"
+      }
+    ]
+  }
+
+  const generateShareableLink = (): string => {
+    const reportId = Math.random().toString(36).substring(2, 15)
+    return `${window.location.origin}/shared-report/${reportId}`
+  }
+
+  const generateFreelancerLinks = () => {
+    if (!analysis) return []
+    const domain = analysis.detectedDomain.toLowerCase()
+    return [
+      {
+        platform: "Fiverr",
+        url: `https://www.fiverr.com/search/gigs?query=${encodeURIComponent(domain)}%20development`,
+        description: `Find ${domain} experts on Fiverr`
+      },
+      {
+        platform: "Upwork",
+        url: `https://www.upwork.com/freelance-jobs/${domain.replace(/\s+/g, '-')}/`,
+        description: `Browse ${domain} freelancers on Upwork`
+      },
+      {
+        platform: "Freelancer.com",
+        url: `https://www.freelancer.com/jobs/${domain.replace(/\s+/g, '-')}/`,
+        description: `Hire ${domain} developers on Freelancer`
+      }
+    ]
+  }
+
   return (
     <SelectionTooltip>
       <div className="min-h-screen bg-background">
@@ -511,618 +1779,22 @@ export default function AnalysisPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-8">
           
-          {/* Simplified Idea Input Section */}
-          <Card className="shadow-2xl border-2">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl">Analyze Your Project Idea</CardTitle>
-              <CardDescription>
-                {analysis 
-                  ? "Analyze a new project idea or modify your current one" 
-                  : "Describe your project concept - our AI will automatically assess difficulty, timeline, and tech requirements"
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <form onSubmit={handleAnalyzeIdea} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="project-idea">Project Idea</Label>
-                  <Textarea
-                    id="project-idea"
-                    placeholder="Describe your project idea in detail... (e.g., A mobile app that helps students find study groups with location-based matching and real-time chat features, An AI-powered code review tool that integrates with GitHub and provides suggestions for optimization, A blockchain-based voting system for university elections with enhanced security)"
-                    className="min-h-32 text-base"
-                    value={formData.idea}
-                    onChange={(e) => setFormData(prev => ({ ...prev, idea: e.target.value }))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    💡 Tip: Be specific about features, target users, and any technical requirements for better analysis
-                  </p>
-                </div>
+          {/* Stage Progress Indicator */}
+          {currentStage > AnalysisStage.INPUT && (
+            <StageProgress currentStage={currentStage} />
+          )}
 
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full text-lg py-6"
-                  disabled={!formData.idea.trim() || analyzing}
-                >
-                  {analyzing ? (
-                    <>
-                      <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                      Analyzing Your Idea...
-                    </>
-                  ) : (
-                    <>
-                      {analysis ? "Analyze New Idea" : "Get AI Analysis"}
-                      <ArrowRight className="ml-2 w-5 h-5" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-         {/* 🔄 Shimmer while analyzing */}
+          {/* Analyzing State */}
           {analyzing && (
             <div className="transition-all duration-700 ease-in-out">
               <Card className="p-6 shadow-lg">
-              <ShimmerLoader />
+                <ShimmerLoader />
               </Card>
             </div>
-         )}
-
-           {/* 🧠 Actual Analysis Results */}
-         {!analyzing && analysis && (
-
-            <>
-              {/* Project Overview with AI Assessments */}
-              <Card className="border-2">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-2xl">{analysis.projectTitle || "Your Project"}</CardTitle>
-                      <CardDescription className="text-lg mt-2">
-                        {analysis.projectDescription || "AI-powered project analysis"}
-                      </CardDescription>
-                      
-                      {/* AI-Detected Project Attributes */}
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        <Badge variant="outline" className="text-sm">
-                          <Code className="w-3 h-3 mr-1" />
-                          {analysis.detectedDomain || "Web Development"}
-                        </Badge>
-                        <Badge variant="outline" className="text-sm">
-                          <Brain className="w-3 h-3 mr-1" />
-                          {analysis.requiredExperience || "Intermediate"} Level
-                        </Badge>
-                        <Badge variant="outline" className="text-sm">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {analysis.estimatedTimeline || analysis.estimatedTimeframe || "2-4 months"}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Badge {...getFeasibilityBadge(analysis.feasibilityScore)} className="text-lg px-4 py-2">
-                      {getFeasibilityBadge(analysis.feasibilityScore).text}
-                    </Badge>
-                  </div>
-                </CardHeader>
-              </Card>
-
-              {/* Project Refinement Tools Section */}
-              {showRefinementTools && (
-                <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-purple-500/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Zap className="w-6 h-6 text-purple-500" />
-                      Project Refinement Tools
-                    </CardTitle>
-                    <CardDescription>
-                      Improve your project with AI-powered suggestions and iterative refinement
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* AI Suggestions */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5 text-purple-500" />
-                          AI Improvement Suggestions
-                        </h4>
-                        <Button
-                          onClick={generateRefinementSuggestions}
-                          disabled={refinementLoading}
-                          size="sm"
-                          variant="outline"
-                        >
-                          {refinementLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                          )}
-                          Generate Suggestions
-                        </Button>
-                      </div>
-
-                      {refinementSuggestions.length > 0 && (
-                        <div className="bg-purple-500/5 p-4 rounded-lg border border-purple-500/20">
-                          <ul className="space-y-2">
-                            {refinementSuggestions.map((suggestion, index) => (
-                              <li key={index} className="flex items-start gap-2 text-sm">
-                                <Lightbulb className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                                {suggestion}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Simplified Project Modification Form */}
-                    <div className="space-y-4">
-                      <h4 className="font-semibold flex items-center gap-2">
-                        <Edit3 className="w-5 h-5 text-purple-500" />
-                        Modify Project Details
-                      </h4>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="refine-title">Project Title</Label>
-                        <input
-                          id="refine-title"
-                          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                          value={projectModifications.title}
-                          onChange={(e) => setProjectModifications((prev) => ({ ...prev, title: e.target.value }))}
-                          placeholder="Updated project title"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="refine-description">Project Description</Label>
-                        <Textarea
-                          id="refine-description"
-                          value={projectModifications.description}
-                          onChange={(e) => setProjectModifications((prev) => ({ ...prev, description: e.target.value }))}
-                          placeholder="Updated project description with improvements..."
-                          rows={4}
-                          className="resize-none"
-                        />
-                      </div>
-
-                      <div className="flex gap-3 pt-4">
-                        <Button
-                          onClick={reAnalyzeProject}
-                          disabled={refinementLoading || !projectModifications.title || !projectModifications.description}
-                          className="flex items-center gap-2"
-                        >
-                          {refinementLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                          Re-Analyze Project
-                        </Button>
-                        <Button variant="outline" onClick={() => setShowRefinementTools(false)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* NEW STRUCTURED FEASIBILITY ANALYSIS */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-6 h-6 text-purple-500" />
-                    Comprehensive Project Analysis
-                  </CardTitle>
-                  <CardDescription>
-                    Detailed evaluation based on market reality, technical feasibility, and success factors
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                  
-                  {/* Overview Metrics */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/20 rounded-lg">
-                    <div className="text-center">
-                      <div className={`text-3xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
-                        {analysis.feasibilityScore}/10
-                      </div>
-                      <p className="text-sm text-muted-foreground">Feasibility Score</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-500 mb-2">{analysis.successProbability}%</div>
-                      <p className="text-sm text-muted-foreground">Success Probability</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-500 mb-2">{analysis.difficultyLevel}</div>
-                      <p className="text-sm text-muted-foreground">Difficulty Level</p>
-                    </div>
-                  </div>
-
-                  {/* 1. HONEST AI FEEDBACK */}
-                  <div className="border-l-4 border-red-500 pl-4 bg-red-500/5 p-4 rounded-r-lg">
-                    <h3 className="font-bold text-red-600 mb-3 flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5" />
-                      1. Honest AI Feedback - Reality Check
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {analysis.honestAiFeedback || "No honest feedback available"}
-                    </p>
-                  </div>
-
-                  {/* 2. KEY STRENGTHS */}
-                  <div className="border-l-4 border-green-500 pl-4 bg-green-500/5 p-4 rounded-r-lg">
-                    <h3 className="font-bold text-green-600 mb-4 flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      2. Key Strengths
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-green-700 mb-2">💡 Value Proposition</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.keyStrengths?.valueProposition || "Value proposition analysis needed"}
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-green-700 mb-2">🎯 Market Fit</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.keyStrengths?.marketFit || "Market fit analysis needed"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 3. POTENTIAL CHALLENGES */}
-                  <div className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
-                    <h3 className="font-bold text-yellow-600 mb-4 flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5" />
-                      3. Potential Challenges
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-yellow-700 mb-2">⚙️ Technical Risks</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.potentialChallenges?.technicalRisks || "Technical risk assessment needed"}
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-yellow-700 mb-2">👥 User/Client Usability Issues</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.potentialChallenges?.usabilityIssues || "Usability review needed"}
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-yellow-700 mb-2">📈 Market/Business Risks</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.potentialChallenges?.marketRisks || "Market risk analysis needed"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4. REQUIREMENTS & SCOPE */}
-                  <div className="border-l-4 border-blue-500 pl-4 bg-blue-500/5 p-4 rounded-r-lg">
-                    <h3 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
-                      <Code className="w-5 h-5" />
-                      4. Requirements & Scope
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-blue-700 mb-3">🎯 Must-Have Features</h4>
-                        <ul className="space-y-1">
-                          {(analysis.requirementsScope?.mustHaveFeatures || []).map((feature, index) => (
-                            <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                              <span className="text-blue-500 font-bold">•</span>
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-blue-700 mb-3">✨ Nice-to-Have Features</h4>
-                        <ul className="space-y-1">
-                          {(analysis.requirementsScope?.niceToHaveFeatures || []).map((feature, index) => (
-                            <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                              <span className="text-blue-400">◦</span>
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <h4 className="font-semibold text-blue-700 mb-3">⚠️ Constraints</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {(analysis.requirementsScope?.constraints || []).map((constraint, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {constraint}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 5. TARGET USERS / MARKET FIT */}
-                  <div className="border-l-4 border-purple-500 pl-4 bg-purple-500/5 p-4 rounded-r-lg">
-                    <h3 className="font-bold text-purple-600 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
-                      5. Target Users & Market Fit
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-purple-700 mb-2">👤 Primary Users</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.targetUsersMarketFit?.primaryUsers || "User analysis needed"}
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-purple-700 mb-2">📊 Market Demand</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.targetUsersMarketFit?.marketDemand || "Market demand assessment needed"}
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-purple-700 mb-2">✅ User Validation Strategy</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {analysis.targetUsersMarketFit?.userValidation || "User validation strategy needed"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Tech Stack Recommendations */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="w-6 h-6" />
-                    Recommended Tech Stack
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-semibold mb-3">Frontend</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.techStack?.frontend || []).map((tech, index) => (
-                          <Badge key={index} variant="outline">
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-3">Backend</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.techStack?.backend || []).map((tech, index) => (
-                          <Badge key={index} variant="outline">
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-3">Database</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.techStack?.database || []).map((tech, index) => (
-                          <Badge key={index} variant="outline">
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-3">Tools & Services</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.techStack?.tools || []).map((tool, index) => (
-                          <Badge key={index} variant="outline">
-                            {tool}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Interactive Development Roadmap */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="w-6 h-6" />
-                    Interactive Development Roadmap
-                  </CardTitle>
-                  <CardDescription>Track your progress through each development phase</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-6">
-                    {/* Phase 1 */}
-                    <div className="border-l-4 border-blue-500 pl-4 bg-blue-500/5 p-4 rounded-r-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-blue-500">
-                          {analysis.roadmap?.phase1?.title || "Phase 1"} ({analysis.roadmap?.phase1?.duration || "TBD"})
-                        </h4>
-                      </div>
-                      <div className="space-y-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.roadmap?.phase1?.tasks || []).map((task, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <span className="text-blue-500 font-bold mt-0.5">•</span>
-                            <span className="text-sm text-foreground">
-                              {task}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Phase 2 */}
-                    <div className="border-l-4 border-yellow-500 pl-4 bg-yellow-500/5 p-4 rounded-r-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-yellow-500">
-                          {analysis.roadmap?.phase2?.title || "Phase 2"} ({analysis.roadmap?.phase2?.duration || "TBD"})
-                        </h4>
-                      </div>
-                      <div className="space-y-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.roadmap?.phase2?.tasks || []).map((task, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <span className="text-yellow-500 font-bold mt-0.5">•</span>
-                            <span className="text-sm text-foreground">
-                              {task}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Phase 3 */}
-                    <div className="border-l-4 border-green-500 pl-4 bg-green-500/5 p-4 rounded-r-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-green-500">
-                          {analysis.roadmap?.phase3?.title || "Phase 3"} ({analysis.roadmap?.phase3?.duration || "TBD"})
-                        </h4>
-                      </div>
-                      <div className="space-y-2">
-                        {/* 🔧 PROTECTED MAP OPERATION */}
-                        {(analysis.roadmap?.phase3?.tasks || []).map((task, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <span className="text-green-500 font-bold mt-0.5">•</span>
-                            <span className="text-sm text-foreground">
-                              {task}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* GitHub Repositories */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="w-6 h-6 text-blue-500" />
-                    Similar Projects & Repositories
-                  </CardTitle>
-                  <CardDescription>Explore existing GitHub repositories related to your project idea</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {githubLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                      <span className="text-muted-foreground">Searching GitHub repositories...</span>
-                    </div>
-                  ) : githubRepos.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {githubRepos.map((repo, index) => (
-                        <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-semibold text-sm">
-                              <a
-                                href={repo.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                              >
-                                {repo.owner}/{repo.name}
-                              </a>
-                            </h4>
-                            <Badge variant="outline" className="text-xs">
-                              {repo.language}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{repo.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">⭐ {repo.stars.toLocaleString()}</span>
-                            <span className="flex items-center gap-1">🍴 {repo.forks.toLocaleString()}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No similar repositories found</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Recommendations */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-6 h-6 text-yellow-500" />
-                    AI Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {/* 🔧 PROTECTED MAP OPERATION */}
-                    {(analysis.recommendations || []).map((recommendation, index) => (
-                      <li key={index} className="flex items-start gap-3 text-sm">
-                        <div className="w-6 h-6 bg-yellow-500/10 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
-                          <span className="text-yellow-600 font-semibold text-xs">{index + 1}</span>
-                        </div>
-                        {recommendation}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Similar Projects */}
-              {(analysis.similarProjects || []).length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Similar Projects for Reference</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {/* 🔧 PROTECTED MAP OPERATION */}
-                      {(analysis.similarProjects || []).map((project, index) => (
-                        <Badge key={index} variant="secondary">
-                          {project}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-4 justify-center pt-8">
-                <Button 
-                  size="lg" 
-                  onClick={exportToPDF} 
-                  disabled={exportLoading} 
-                  className="flex items-center gap-2"
-                >
-                  {exportLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  Download Full Report
-                </Button>
-              </div>
-            </>
           )}
 
-          {/* No Analysis State */}
-          {!analysis && !loading && !analyzing && (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Brain className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <CardTitle className="mb-2">Ready to Analyze Your Project Idea</CardTitle>
-                <CardDescription>
-                  Our AI will automatically assess difficulty, timeline, domain, and provide tailored recommendations
-                </CardDescription>
-              </CardContent>
-            </Card>
-          )}
+          {/* Stage Content */}
+          {!analyzing && renderStageContent()}
         </div>
       </div>
 
