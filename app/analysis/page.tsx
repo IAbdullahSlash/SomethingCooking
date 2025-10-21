@@ -686,7 +686,7 @@ export default function AnalysisPage() {
   }
 
   const renderInputStage = () => (
-    <Card className="shadow-2xl border-2">
+    <Card className="shadow-2xl">
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl">Analyze Your Project Idea</CardTitle>
         <CardDescription>
@@ -722,7 +722,7 @@ export default function AnalysisPage() {
               </>
             ) : (
               <>
-                Start 5-Stage Analysis
+                Get an Overview
                 <Play className="ml-2 w-5 h-5" />
               </>
             )}
@@ -738,7 +738,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 1: Quick Snapshot */}
-        <Card className="border-2 border-blue-500/50 bg-blue-500/5">
+        <Card className="bg-blue-500/5">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -758,24 +758,24 @@ export default function AnalysisPage() {
 
             {/* 3 High-Level Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-card rounded-lg border-2 border-blue-500/30">
+              <div className="text-center p-4 bg-card rounded-lg">
                 <div className={`text-4xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
                   {analysis.feasibilityScore}/10
                 </div>
                 <p className="text-sm font-semibold text-muted-foreground">Feasibility Score</p>
               </div>
-              <div className="text-center p-4 bg-card rounded-lg border-2 border-green-500/30">
+              <div className="text-center p-4 bg-card rounded-lg">
                 <div className="text-4xl font-bold text-green-500 mb-2">{analysis.successProbability}%</div>
                 <p className="text-sm font-semibold text-muted-foreground">Success Probability</p>
               </div>
-              <div className="text-center p-4 bg-card rounded-lg border-2 border-purple-500/30">
+              <div className="text-center p-4 bg-card rounded-lg">
                 <div className="text-4xl font-bold text-purple-500 mb-2">{analysis.difficultyLevel}</div>
                 <p className="text-sm font-semibold text-muted-foreground">Difficulty Level</p>
               </div>
             </div>
 
             {/* Reality Check */}
-            <div className={`p-4 rounded-lg border-2 ${getRealityCheckColor(analysis.feasibilityScore)}`}>
+            <div className={`p-4 rounded-lg ${getRealityCheckColor(analysis.feasibilityScore)}`}>
               <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
                 <Shield className="w-5 h-5" />
                 Honest Reality Check
@@ -811,7 +811,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 2: Executive Summary */}
-        <Card className="border-2 border-green-500/50 bg-green-500/5">
+        <Card className="bg-green-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <FileText className="w-6 h-6 text-green-500" />
@@ -994,7 +994,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 3: Roadmaps */}
-        <Card className="border-2 border-yellow-500/50 bg-yellow-500/5">
+        <Card className="bg-yellow-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <MapPin className="w-6 h-6 text-yellow-500" />
@@ -1104,7 +1104,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 4: Technology Roadmap */}
-        <Card className="border-2 border-purple-500/50 bg-purple-500/5">
+        <Card className="bg-purple-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Code className="w-6 h-6 text-purple-500" />
@@ -1247,7 +1247,7 @@ export default function AnalysisPage() {
     return (
       <div className="space-y-6">
         {/* Stage 5: Deep Resources */}
-        <Card className="border-2 border-red-500/50 bg-red-500/5">
+        <Card className="bg-red-500/5">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Briefcase className="w-6 h-6 text-red-500" />
