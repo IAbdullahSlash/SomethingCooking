@@ -64,13 +64,29 @@ CRITICAL CONSTRAINTS TO CONSIDER:
 REQUIRED ANALYSIS STRUCTURE:
 You MUST follow this exact structure for the feasibility analysis:
 
-1. HONEST AI FEEDBACK:
-- Assess if the idea solves a real, clear problem
-- Evaluate if it's a common/oversaturated idea
-- Determine uniqueness and differentiation factors
-- Judge if the problem is worth solving (big enough pain point)
-- Assess if expert knowledge is required
-- Provide 4-5 lines of brutally honest reality check
+1. HONEST AI FEEDBACK (DETAILED VERSION):
+Create an elaborate, structured analysis with exactly these sections and formatting up to 300 words:
+
+**## Market Reality Assessment**
+- Evaluate if the idea solves a real, clear problem (2-3 sentences)
+- Judge market saturation and competition level (2-3 sentences)
+
+**## Technical Feasibility Analysis**
+- Assess development complexity and required skills (2-3 sentences)
+- Identify key technical risks and challenges (2-3 sentences)
+
+**## Success Probability Factors**
+- List 2-3 key strengths using bullet points with **bold labels**:
+  - **Strength 1**: Description
+  - **Strength 2**: Description
+- List 2-3 major challenges using bullet points with **bold labels**:
+  - **Challenge 1**: Description
+  - **Challenge 2**: Description
+
+**## Final Verdict**
+- Provide 2-3 sentences with honest recommendation and overall assessment
+
+Format this as markdown with proper headings, bullet points, and bold text. Keep it under 300 words total.
 
 2. KEY STRENGTHS:
 - Value Proposition: Unique advantages (speed, cost savings, convenience, innovation)
@@ -99,7 +115,7 @@ IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text bef
   "detectedDomain": "Web Development" | "Mobile App Development" | "Machine Learning/AI" | "Data Science" | "Game Development" | "Blockchain/Crypto" | "IoT/Hardware" | "Cybersecurity" | "DevOps/Cloud" | "Desktop Applications",
   "requiredExperience": "Beginner" | "Intermediate" | "Advanced",
   "estimatedTimeline": "string (realistic with 50% buffer)",
-  "honestAiFeedback": "4-5 lines of brutally honest reality check covering problem validation, uniqueness, market size, and expert requirements",
+  "honestAiFeedback": "The detailed markdown formatted analysis with headings and bullet points as specified above, exactly as written with markdown formatting",
   "keyStrengths": {
     "valueProposition": "Unique advantages like speed, cost savings, convenience, or innovation",
     "marketFit": "How well this solves pain points felt by target audience"
@@ -226,6 +242,22 @@ function createFallbackAnalysis(idea: string): any {
     detectedDomain = "Game Development"
   }
 
+  // Create detailed markdown feedback similar to AI Assistant responses
+  const detailedFeedback = `## Market Reality Assessment
+This project addresses a recognizable need but may face significant competition in the current market landscape. The technical complexity suggests that intermediate to advanced skills will be required for successful implementation.
+
+## Technical Feasibility Analysis
+The development approach appears manageable with proper planning and realistic timeline expectations. Key technical challenges include integration complexity and potential performance bottlenecks that need careful consideration.
+
+## Success Probability Factors
+- **Strong Foundation**: Clear problem-solution fit with potential for meaningful user engagement
+- **Market Opportunity**: Addresses common pain points that users actively seek solutions for
+- **Competition Risk**: Competitive landscape may require strong differentiation strategy
+- **User Adoption**: Interface complexity and onboarding challenges need attention
+
+## Final Verdict
+Success depends heavily on execution quality, user acquisition strategy, and market validation. Recommend starting with MVP approach and iterative development to minimize risk while maximizing learning opportunities.`
+
   return {
     feasibilityScore,
     difficultyLevel,
@@ -234,7 +266,7 @@ function createFallbackAnalysis(idea: string): any {
     detectedDomain,
     requiredExperience: difficultyLevel,
     estimatedTimeline: "2-4 months with buffer",
-    honestAiFeedback: "This project addresses a recognizable need but may face significant competition in the market. The technical complexity suggests intermediate to advanced skills are required. Market validation will be crucial before full development. Success depends heavily on execution quality and user acquisition strategy.",
+    honestAiFeedback: detailedFeedback,
     keyStrengths: {
       valueProposition: "Clear problem-solution fit with potential for user engagement",
       marketFit: "Addresses common pain points that users actively seek solutions for"

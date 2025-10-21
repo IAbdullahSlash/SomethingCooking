@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { SelectionTooltip } from "@/components/SelectionTooltip"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import {
   Brain,
   CheckCircle,
@@ -247,6 +249,72 @@ interface GitHubRepo {
 
 interface TaskProgress {
   [key: string]: boolean
+}
+
+// Typing Effect Component for Reality Check
+interface TypingTextProps {
+  text: string
+  speed?: number
+  className?: string
+}
+
+function TypingText({ text, speed = 30, className = "" }: TypingTextProps) {
+  const [displayedText, setDisplayedText] = useState("")
+  const [isComplete, setIsComplete] = useState(false)
+
+  useEffect(() => {
+    setDisplayedText("")
+    setIsComplete(false)
+    
+    let index = 0
+    const timer = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(text.slice(0, index + 1))
+        index++
+      } else {
+        setIsComplete(true)
+        clearInterval(timer)
+      }
+    }, speed)
+
+    return () => clearInterval(timer)
+  }, [text, speed])
+
+  return (
+    <div className={className}>
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h2: ({ children }) => (
+            <h2 className="text-lg font-bold mb-3 mt-4 first:mt-0">{children}</h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="text-base font-semibold mb-2 mt-3">{children}</h3>
+          ),
+          p: ({ children }) => (
+            <p className="mb-3 leading-relaxed">{children}</p>
+          ),
+          ul: ({ children }) => (
+            <ul className="mb-3 space-y-1">{children}</ul>
+          ),
+          li: ({ children }) => (
+            <li className="flex items-start gap-2">
+              <span className="text-current mt-2 w-1 h-1 rounded-full bg-current flex-shrink-0"></span>
+              <span>{children}</span>
+            </li>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold">{children}</strong>
+          ),
+        }}
+      >
+        {displayedText}
+      </ReactMarkdown>
+      {!isComplete && (
+        <span className="inline-block w-2 h-5 bg-current ml-1 animate-pulse" />
+      )}
+    </div>
+  )
 }
 
 export default function AnalysisPage() {
@@ -736,115 +804,134 @@ export default function AnalysisPage() {
     if (!analysis) return null
 
     return (
-      <div className="space-y-6">
-        {/* Stage 1: Quick Snapshot */}
-        <Card className="bg-blue-500/5">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <Zap className="w-6 h-6 text-blue-500" />
-                  IS IT WORTH IT?
-                </CardTitle>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goBackToInput}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit Prompt
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Project Title & Description */}
-            <div className="text-center">
-              <h3 className="text-xl font-bold mb-2">{analysis.projectTitle}</h3>
-              <p className="text-muted-foreground">{analysis.projectDescription}</p>
-            </div>
+      <div className="space-y-8">
+        {/* Centered Header with Edit Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex-1"></div>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
+              <Zap className="w-8 h-8 text-blue-500" />
+              IS IT WORTH IT?
+            </h1>
+          </div>
+          <div className="flex-1 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goBackToInput}
+              className="flex items-center gap-2"
+            >
+              <Edit3 className="w-4 h-4" />
+              Edit Prompt
+            </Button>
+          </div>
+        </div>
 
-            {/* Primary Category & Tags */}
-            <div className="text-center space-y-3">
+        {/* Main Layout: Left Elements + Right Reality Check */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          
+          {/* LEFT SIDE - All elements as in wireframe */}
+          <div className="space-y-8">
+            
+            {/* Project Details */}
+            <div className="space-y-6">
+              {/* Centered Project Title */}
+              <div className="text-center">
+                <h3 className="text-3xl font-bold">{analysis.projectTitle}</h3>
+              </div>
+              
+              {/* Category and Targeted Audience - Side by side */}
               {(() => {
                 const { category, tags } = generateCategoryAndTags(analysis.projectDescription, analysis.projectTitle)
                 return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">Category:</span>
-                      <Badge variant="secondary" className="font-semibold">
-                        {category}
-                      </Badge>
+                  <div className="flex items-start justify-between gap-8">
+                    <div className="flex flex-col">
+                      <span className="text-lg font-semibold mb-1">Category:</span>
+                      <span className="text-lg text-muted-foreground">{category}</span>
                     </div>
-                    {tags.length > 0 && (
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-muted-foreground">Tags:</span>
-                        {tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex flex-col text-right">
+                      <span className="text-lg font-semibold mb-1">Targeted Audience:</span>
+                      <span className="text-lg text-muted-foreground">
+                        {analysis.targetAudience || "General users"}
+                      </span>
+                    </div>
                   </div>
                 )
               })()}
             </div>
 
             {/* AI Verdict */}
-            <div className="text-center p-4 bg-card rounded-lg">
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">AI Verdict</h4>
-              <p className="text-base font-medium leading-relaxed">
+            <div className="space-y-3">
+              <h4 className="text-xl font-semibold">AI Verdict:</h4>
+              <p className="text-muted-foreground text-base leading-relaxed">
                 {generateAIVerdict(analysis.feasibilityScore, analysis.successProbability, analysis.difficultyLevel)}
               </p>
             </div>
 
-            {/* 3 High-Level Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-card rounded-lg">
-                <div className={`text-4xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
-                  {analysis.feasibilityScore}/10
+            {/* Three Metric Boxes - Matching wireframe layout */}
+            <div className="space-y-6">
+              {/* Top row - 2 boxes */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 border rounded-lg text-center bg-card">
+                  <div className={`text-4xl font-bold mb-2 ${getFeasibilityColor(analysis.feasibilityScore)}`}>
+                    {analysis.feasibilityScore}/10
+                  </div>
+                  <p className="text-sm font-semibold text-muted-foreground">Feasibility Score</p>
                 </div>
-                <p className="text-sm font-semibold text-muted-foreground">Feasibility Score</p>
+                
+                <div className="p-6 border rounded-lg text-center bg-card">
+                  <div className="text-4xl font-bold text-green-500 mb-2">{analysis.successProbability}%</div>
+                  <p className="text-sm font-semibold text-muted-foreground">Success Probability</p>
+                </div>
               </div>
-              <div className="text-center p-4 bg-card rounded-lg">
-                <div className="text-4xl font-bold text-green-500 mb-2">{analysis.successProbability}%</div>
-                <p className="text-sm font-semibold text-muted-foreground">Success Probability</p>
-              </div>
-              <div className="text-center p-4 bg-card rounded-lg">
-                <div className="text-4xl font-bold text-purple-500 mb-2">{analysis.difficultyLevel}</div>
-                <p className="text-sm font-semibold text-muted-foreground">Difficulty Level</p>
+              
+              {/* Bottom row - 1 box centered */}
+              <div className="flex justify-center">
+                <div className="p-6 border rounded-lg text-center bg-card w-64">
+                  <div className="text-4xl font-bold text-purple-500 mb-2">{analysis.difficultyLevel}</div>
+                  <p className="text-sm font-semibold text-muted-foreground">Difficulty Level</p>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Reality Check */}
-            <div className={`p-4 rounded-lg ${getRealityCheckColor(analysis.feasibilityScore)}`}>
-              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Honest Reality Check
-              </h4>
-              <p className="text-sm leading-relaxed">{analysis.honestAiFeedback}</p>
+          {/* RIGHT SIDE - Honest Reality Check */}
+          <div className="flex items-center justify-center">
+            <div className={`p-8 rounded-xl w-full min-h-[500px] flex flex-col ${getRealityCheckColor(analysis.feasibilityScore)}`}>
+              <div className="space-y-6 h-full">
+                <h4 className="font-bold text-xl flex items-center justify-center gap-2">
+                  <Shield className="w-6 h-6" />
+                  Honest Reality Check
+                </h4>
+                
+                <div className="flex-1 flex flex-col justify-center max-w-md mx-auto">
+                  <TypingText 
+                    text={analysis.honestAiFeedback}
+                    speed={25}
+                    className="text-sm text-left"
+                  />
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
 
-            {/* CTA */}
-            <div className="text-center pt-4">
-              <Button
-                size="lg"
-                onClick={() => proceedToStage(AnalysisStage.EXECUTIVE_SUMMARY)}
-                disabled={loading}
-                className="text-lg px-8 py-4"
-              >
-                {loading ? (
-                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                ) : (
-                  <Unlock className="mr-2 w-5 h-5" />
-                )}
-                Proceed to Executive Summary
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* CTA Section */}
+        <div className="text-center pt-8 border-t-2 border-dashed">
+          <Button
+            size="lg"
+            onClick={() => proceedToStage(AnalysisStage.EXECUTIVE_SUMMARY)}
+            disabled={loading}
+            className="text-xl px-12 py-6 h-auto"
+          >
+            {loading ? (
+              <Loader2 className="mr-3 w-6 h-6 animate-spin" />
+            ) : (
+              <Unlock className="mr-3 w-6 h-6" />
+            )}
+            Proceed to Executive Summary
+          </Button>
+        </div>
       </div>
     )
   }
