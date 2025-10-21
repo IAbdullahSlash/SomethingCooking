@@ -747,6 +747,15 @@ export default function AnalysisPage() {
                   IS IT WORTH IT?
                 </CardTitle>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goBackToInput}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Prompt
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -754,6 +763,41 @@ export default function AnalysisPage() {
             <div className="text-center">
               <h3 className="text-xl font-bold mb-2">{analysis.projectTitle}</h3>
               <p className="text-muted-foreground">{analysis.projectDescription}</p>
+            </div>
+
+            {/* Primary Category & Tags */}
+            <div className="text-center space-y-3">
+              {(() => {
+                const { category, tags } = generateCategoryAndTags(analysis.projectDescription, analysis.projectTitle)
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">Category:</span>
+                      <Badge variant="secondary" className="font-semibold">
+                        {category}
+                      </Badge>
+                    </div>
+                    {tags.length > 0 && (
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-muted-foreground">Tags:</span>
+                        {tags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* AI Verdict */}
+            <div className="text-center p-4 bg-card rounded-lg">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">AI Verdict</h4>
+              <p className="text-base font-medium leading-relaxed">
+                {generateAIVerdict(analysis.feasibilityScore, analysis.successProbability, analysis.difficultyLevel)}
+              </p>
             </div>
 
             {/* 3 High-Level Metrics */}
@@ -813,13 +857,26 @@ export default function AnalysisPage() {
         {/* Stage 2: Executive Summary */}
         <Card className="bg-green-500/5">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <FileText className="w-6 h-6 text-green-500" />
-              Executive Summary
-            </CardTitle>
-            <CardDescription>
-              strategic overview
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-green-500" />
+                  Executive Summary
+                </CardTitle>
+                <CardDescription>
+                  strategic overview
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goBackToInput}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Prompt
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Honest Feedback */}
@@ -996,13 +1053,26 @@ export default function AnalysisPage() {
         {/* Stage 3: Roadmaps */}
         <Card className="bg-yellow-500/5">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <MapPin className="w-6 h-6 text-yellow-500" />
-              Stage 3: Project Roadmap + SDLC Summary
-            </CardTitle>
-            <CardDescription>
-              Execution plan and development flow tied to SDLC methodology
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <MapPin className="w-6 h-6 text-yellow-500" />
+                  Stage 3: Project Roadmap + SDLC Summary
+                </CardTitle>
+                <CardDescription>
+                  Execution plan and development flow tied to SDLC methodology
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goBackToInput}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Prompt
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Project Milestones */}
@@ -1106,13 +1176,26 @@ export default function AnalysisPage() {
         {/* Stage 4: Technology Roadmap */}
         <Card className="bg-purple-500/5">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Code className="w-6 h-6 text-purple-500" />
-              Stage 4: Technology Roadmap & Stack
-            </CardTitle>
-            <CardDescription>
-              Technical path, readiness advice, and cost analysis
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Code className="w-6 h-6 text-purple-500" />
+                  Stage 4: Technology Roadmap & Stack
+                </CardTitle>
+                <CardDescription>
+                  Technical path, readiness advice, and cost analysis
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goBackToInput}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Prompt
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Tech Roadmap */}
@@ -1249,13 +1332,26 @@ export default function AnalysisPage() {
         {/* Stage 5: Deep Resources */}
         <Card className="bg-red-500/5">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Briefcase className="w-6 h-6 text-red-500" />
-              Stage 5: Deep Resources & Interactive Tools
-            </CardTitle>
-            <CardDescription>
-              Practical handoff to execution - Premium features
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Briefcase className="w-6 h-6 text-red-500" />
+                  Stage 5: Deep Resources & Interactive Tools
+                </CardTitle>
+                <CardDescription>
+                  Practical handoff to execution - Premium features
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goBackToInput}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Prompt
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Shareable Report */}
@@ -1514,6 +1610,80 @@ export default function AnalysisPage() {
     if (score >= 8) return "border-green-500 bg-green-500/10"
     if (score >= 6) return "border-yellow-500 bg-yellow-500/10"
     return "border-red-500 bg-red-500/10"
+  }
+
+  // Generate category and tags based on project description
+  const generateCategoryAndTags = (description: string, title: string) => {
+    const text = `${title} ${description}`.toLowerCase()
+    
+    // Define categories with keywords
+    const categoryMap = {
+      "EdTech": ["education", "learning", "student", "teacher", "course", "school", "university", "training"],
+      "FinTech": ["finance", "banking", "payment", "money", "investment", "trading", "wallet", "cryptocurrency"],
+      "HealthTech": ["health", "medical", "healthcare", "doctor", "patient", "hospital", "wellness", "fitness"],
+      "E-commerce": ["shop", "store", "marketplace", "buy", "sell", "retail", "product", "order"],
+      "SaaS": ["software", "service", "platform", "tool", "dashboard", "api", "cloud", "subscription"],
+      "Social": ["social", "community", "network", "chat", "messaging", "forum", "connect"],
+      "Gaming": ["game", "gaming", "player", "entertainment", "virtual", "interactive"],
+      "Productivity": ["productivity", "management", "organize", "task", "workflow", "efficiency"],
+      "IoT": ["iot", "device", "sensor", "smart", "connected", "automation", "hardware"],
+      "AI/ML": ["ai", "artificial intelligence", "machine learning", "ml", "neural", "algorithm"]
+    }
+
+    // Find matching category
+    let category = "Tech"
+    for (const [cat, keywords] of Object.entries(categoryMap)) {
+      if (keywords.some(keyword => text.includes(keyword))) {
+        category = cat
+        break
+      }
+    }
+
+    // Generate tags based on common tech keywords
+    const possibleTags = [
+      { keyword: ["dashboard", "admin", "panel"], tag: "Dashboard" },
+      { keyword: ["api", "backend", "server"], tag: "API" },
+      { keyword: ["mobile", "app", "ios", "android"], tag: "Mobile App" },
+      { keyword: ["web", "website", "frontend"], tag: "Web App" },
+      { keyword: ["database", "data", "storage"], tag: "Database" },
+      { keyword: ["automation", "automatic", "auto"], tag: "Automation" },
+      { keyword: ["portal", "platform", "system"], tag: "Portal" },
+      { keyword: ["analytics", "analysis", "reporting"], tag: "Analytics" },
+      { keyword: ["user", "customer", "client"], tag: "User Management" },
+      { keyword: ["integration", "connect", "sync"], tag: "Integration" }
+    ]
+
+    const tags = possibleTags
+      .filter(({ keyword }) => keyword.some(k => text.includes(k)))
+      .map(({ tag }) => tag)
+      .slice(0, 3) // Limit to 3 tags
+
+    return { category, tags }
+  }
+
+  // Generate AI verdict based on scores
+  const generateAIVerdict = (feasibility: number, successProbability: number, difficulty: string) => {
+    const feasibilityLevel = feasibility >= 8 ? "strong" : feasibility >= 6 ? "moderate" : "limited"
+    const successLevel = successProbability >= 70 ? "high" : successProbability >= 50 ? "moderate" : "low"
+    const difficultyLevel = difficulty.toLowerCase()
+
+    const verdicts = [
+      { condition: feasibility >= 8 && successProbability >= 70, text: "💡 This idea shows excellent potential with strong technical feasibility and market opportunity." },
+      { condition: feasibility >= 7 && successProbability >= 60, text: "💡 This idea demonstrates solid viability with good technical foundations and market potential." },
+      { condition: feasibility >= 6 && successProbability >= 50, text: "💡 This idea shows moderate promise but may require careful planning and execution." },
+      { condition: feasibility >= 6 && successProbability < 50, text: "⚠️ This idea has technical merit but faces significant market challenges." },
+      { condition: feasibility < 6 && successProbability >= 60, text: "⚠️ This idea has market potential but presents notable technical challenges." },
+      { condition: true, text: "🔍 This idea requires substantial development and market validation to succeed." }
+    ]
+
+    return verdicts.find(v => v.condition)?.text || verdicts[verdicts.length - 1].text
+  }
+
+  // Function to go back to input stage
+  const goBackToInput = () => {
+    setCurrentStage(AnalysisStage.INPUT)
+    setAnalysis(null)
+    setProjectModifications({ title: "", description: "" })
   }
 
   // 🔥 STAGE DATA GENERATORS
