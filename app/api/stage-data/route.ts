@@ -1,6 +1,7 @@
 import { generateText } from "ai"
 import { createGroq } from "@ai-sdk/groq"
 import { type NextRequest, NextResponse } from "next/server"
+import { fetchResearchPapers } from "@/lib/research-papers"
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -51,27 +52,8 @@ async function generateStage2Data(analysis: any, idea: string) {
     }
   ]
 
-  // Mock expert articles (in production, you'd call real APIs)
-  const expertArticles = [
-    {
-      title: "Building Scalable Web Applications: Best Practices",
-      url: "https://example.com/scalable-web-apps",
-      source: "Tech Insights Blog",
-      summary: "Essential principles for designing applications that can handle growth and increased user load."
-    },
-    {
-      title: "User Experience Design for Modern Applications",
-      url: "https://example.com/ux-design",
-      source: "UX Design Magazine",
-      summary: "Key UX guidelines to create intuitive and user-friendly application interfaces."
-    },
-    {
-      title: "Agile Development Methodologies in Practice",
-      url: "https://example.com/agile-development",
-      source: "Software Engineering Journal",
-      summary: "How to implement agile practices for faster, more flexible development cycles."
-    }
-  ]
+  // Fetch real expert articles from research papers APIs
+  const expertArticles = await fetchResearchPapers(idea)
 
   // Mock existing solutions
   const existingSolutions = [
