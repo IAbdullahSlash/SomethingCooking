@@ -74,50 +74,6 @@ function ShimmerLoader() {
   )
 }
 
-// 🎯 Stage Progress Component
-function StageProgress({ currentStage }: { currentStage: number }) {
-  const stages = [
-    { name: "Quick Snapshot", icon: Zap },
-    { name: "Executive Summary", icon: FileText },
-    { name: "Roadmaps", icon: MapPin },
-    { name: "Tech Stack", icon: Code },
-    { name: "Deep Resources", icon: Briefcase }
-  ]
-
-  return (
-    <div className="flex items-center justify-center space-x-2 mb-6">
-      {stages.map((stage, index) => {
-        const StageIcon = stage.icon
-        const isCompleted = index < currentStage - 1
-        const isCurrent = index === currentStage - 1
-        const isLocked = index >= currentStage
-
-        return (
-          <div key={index} className="flex items-center">
-            <div className={`
-              flex items-center justify-center w-10 h-10 rounded-full border-2
-              ${isCompleted ? 'bg-green-500 border-green-500 text-white' : ''}
-              ${isCurrent ? 'bg-blue-500 border-blue-500 text-white' : ''}
-              ${isLocked ? 'bg-muted border-muted-foreground/20 text-muted-foreground' : ''}
-            `}>
-              {isCompleted ? (
-                <CheckCircle className="w-5 h-5" />
-              ) : (
-                <StageIcon className="w-5 h-5" />
-              )}
-            </div>
-            <span className={`text-xs ml-2 ${isLocked ? 'text-muted-foreground' : ''}`}>
-              {stage.name}
-            </span>
-            {index < stages.length - 1 && (
-              <div className={`w-8 h-0.5 mx-2 ${isCompleted || (isCurrent && index < currentStage - 1) ? 'bg-green-500' : 'bg-muted'}`} />
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 interface AnalysisData {
   feasibilityScore: number
@@ -370,6 +326,14 @@ export default function AnalysisPage() {
   })
   const [analyzing, setAnalyzing] = useState(false)
 
+  // Navigation helper - go back one stage without clearing the prompt/idea
+  const goToPreviousStage = () => {
+    setCurrentStage(prev => {
+      if (prev === AnalysisStage.INPUT) return prev
+      return (prev - 1) as AnalysisStage
+    })
+  }
+
   // 🔧 ALTERNATIVE QUICK FIX - Data Validation Helper
   const validateAnalysisData = (analysisData: any): AnalysisData => {
     // Add this safety check at the top of your component
@@ -380,6 +344,8 @@ export default function AnalysisPage() {
       !analysisData.requirementsScope ||
       !analysisData.targetUsersMarketFit ||
       !analysisData.techStack || 
+
+  
       !analysisData.roadmap ||
       !analysisData.recommendations ||
       !analysisData.similarProjects
@@ -435,6 +401,22 @@ export default function AnalysisPage() {
         }
       }
     }
+  }
+
+  // Small helper to clean AI-generated markdown text so ReactMarkdown renders correctly
+  const sanitizeMarkdown = (raw: string | undefined) => {
+    if (!raw) return ""
+    let s = raw
+    // Remove wrapping code fences ``` or ```json
+    s = s.replace(/^\s*```(?:[a-zA-Z0-9_-]+)?\s*/g, "")
+    s = s.replace(/\s*```\s*$/g, "")
+    // Unescape escaped asterisks/backticks/slashes that sometimes appear
+    s = s.replace(/\\\*/g, "*")
+    s = s.replace(/\\`/g, "`")
+    s = s.replace(/\\n/g, "\n")
+    // Trim excessive whitespace
+    s = s.trim()
+    return s
   }
 
   const fetchGitHubRepos = async (searchQuery: string) => {
@@ -804,7 +786,7 @@ export default function AnalysisPage() {
     if (!analysis) return null
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-16">
         {/* Centered Header with Edit Button */}
         <div className="flex items-center justify-between">
           <div className="flex-1"></div>
@@ -814,7 +796,10 @@ export default function AnalysisPage() {
               IS IT WORTH IT?
             </h1>
           </div>
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={goToPreviousStage}>
+              Back
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -929,7 +914,7 @@ export default function AnalysisPage() {
             ) : (
               <Unlock className="mr-3 w-6 h-6" />
             )}
-            Proceed to Executive Summary
+            Still Convinced? Proceed
           </Button>
         </div>
       </div>
@@ -941,44 +926,46 @@ export default function AnalysisPage() {
 
     return (
       <div className="space-y-6">
-        {/* Stage 2: Executive Summary */}
+        {/* Stage 2:Summary */}
         <Card className="bg-green-500/5">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-2xl flex items-center gap-2">
                   <FileText className="w-6 h-6 text-green-500" />
-                  Executive Summary
+                  Elaborated Summary.
                 </CardTitle>
                 <CardDescription>
                   strategic overview
                 </CardDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goBackToInput}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit Prompt
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={goToPreviousStage}>
+                  Back
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goBackToInput}
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Prompt
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Honest Feedback */}
             <div className="border-l-4 border-red-500 pl-4 bg-red-500/5 p-4 rounded-r-lg">
               <h4 className="font-bold text-red-600 mb-3">Honest Feedback</h4>
-              <ul className="space-y-2 text-sm">
-                {analysis.honestAiFeedback.split('.').slice(0, 5).map((feedback, index) => (
-                  feedback.trim() && (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-red-500 font-bold">•</span>
-                      {feedback.trim()}
-                    </li>
-                  )
-                ))}
-              </ul>
+              <div className="text-sm space-y-3">
+                <TypingText 
+                  text={sanitizeMarkdown(analysis.honestAiFeedback)} 
+                  speed={15}
+                  className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-red-600 prose-strong:text-red-700 prose-li:text-gray-700 dark:prose-li:text-gray-300"
+                />
+              </div>
             </div>
 
             {/* Key Strengths and Challenges */}
@@ -1048,7 +1035,7 @@ export default function AnalysisPage() {
             <div className="bg-slate-500/10 p-4 rounded-lg border border-slate-500/30">
               <h4 className="font-bold text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                What Experts Say
+                What Experts Say?
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {stageData.stage2.expertArticles.map((article, index) => (
@@ -1150,15 +1137,20 @@ export default function AnalysisPage() {
                   Execution plan and development flow tied to SDLC methodology
                 </CardDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goBackToInput}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit Prompt
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={goToPreviousStage}>
+                  Back
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goBackToInput}
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Prompt
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1273,15 +1265,20 @@ export default function AnalysisPage() {
                   Technical path, readiness advice, and cost analysis
                 </CardDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goBackToInput}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit Prompt
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={goToPreviousStage}>
+                  Back
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goBackToInput}
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Prompt
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1429,15 +1426,20 @@ export default function AnalysisPage() {
                   Practical handoff to execution - Premium features
                 </CardDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goBackToInput}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit Prompt
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={goToPreviousStage}>
+                  Back
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goBackToInput}
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Prompt
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -2019,12 +2021,6 @@ export default function AnalysisPage() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-8">
-          
-          {/* Stage Progress Indicator */}
-          {currentStage > AnalysisStage.INPUT && (
-            <StageProgress currentStage={currentStage} />
-          )}
-
           {/* Analyzing State */}
           {analyzing && (
             <div className="transition-all duration-700 ease-in-out">

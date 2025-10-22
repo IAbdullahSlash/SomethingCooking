@@ -24,7 +24,6 @@ Provide 5-7 specific improvement suggestions that could:
 3. Improve market viability
 4. Address current challenges
 5. Enhance user experience
-6. Optimize development timeline
 
 Format as a JSON array of strings:
 ["suggestion 1", "suggestion 2", "suggestion 3", ...]
@@ -33,8 +32,7 @@ Focus on practical, implementable improvements. Be specific and actionable.`
 
     const { text } = await generateText({
       model: groq("llama-3.1-70b-versatile"),
-      prompt,
-      maxTokens: 1000,
+      prompt
     })
 
     const suggestions = JSON.parse(text)

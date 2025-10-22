@@ -53,14 +53,6 @@ Domain Detection Keywords:
 - Data Science: analytics, visualization, big data, ETL
 - Game Development: game, unity, graphics, multiplayer
 
-CRITICAL CONSTRAINTS TO CONSIDER:
-✓ Solo developer assumed unless specified
-✓ Part-time development (evenings/weekends)
-✓ Limited budget for third-party services
-✓ Learning curve for new technologies
-✓ Integration complexity and API limitations
-✓ Deployment and maintenance overhead
-
 REQUIRED ANALYSIS STRUCTURE:
 You MUST follow this exact structure for the feasibility analysis:
 
@@ -76,16 +68,17 @@ Create an elaborate, structured analysis with exactly these sections and formatt
 - Identify key technical risks and challenges (2-3 sentences)
 
 **## Success Probability Factors**
-- List 2-3 key strengths using bullet points with **bold labels**:
+- List 2-3 key Technical strengths using bullet points with **bold labels**:
   - **Strength 1**: Description
   - **Strength 2**: Description
-- List 2-3 major challenges using bullet points with **bold labels**:
+- List 2-3 major Technical challenges using bullet points with **bold labels**:
   - **Challenge 1**: Description
   - **Challenge 2**: Description
 
 **## Final Verdict**
 - Provide 2-3 sentences with honest recommendation and overall assessment
 
+In Honest AI feedback, Technical feasiblity, succes Probability factors use technical words as well.
 Format this as markdown with proper headings, bullet points, and bold text. Keep it under 300 words total.
 
 2. KEY STRENGTHS:
@@ -102,8 +95,7 @@ Format this as markdown with proper headings, bullet points, and bold text. Keep
 - Constraints: budget, time, skills, regulations
 
 5. TARGET USERS / MARKET FIT:
-- Specific user demographics and personas
-- Demand/interest validation for this solution
+- Specific user field/type in society, who can benefit from this?
 
 IMPORTANT: Respond with ONLY valid JSON. Do not include any explanatory text before or after the JSON.
 
@@ -282,7 +274,7 @@ Success depends heavily on execution quality, user acquisition strategy, and mar
       constraints: ["Limited development time", "Budget constraints", "Technical expertise required"]
     },
     targetUsersMarketFit: {
-      primaryUsers: "General users seeking solutions to common problems",
+      primaryUsers: "Type of/field of users benefitting the most from the solution",
       marketDemand: "Moderate demand with room for differentiation",
       userValidation: "Conduct user interviews and prototype testing"
     },
