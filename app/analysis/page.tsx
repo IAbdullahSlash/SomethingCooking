@@ -266,9 +266,6 @@ function TypingText({ text, speed = 30, className = "" }: TypingTextProps) {
       >
         {displayedText}
       </ReactMarkdown>
-      {!isComplete && (
-        <span className="inline-block w-2 h-5 bg-current ml-1 animate-pulse" />
-      )}
     </div>
   )
 }
@@ -916,9 +913,11 @@ export default function AnalysisPage() {
                   {/* AI Verdict within Honest Reality Check */}
                   <div className="mt-6 pt-4 border-t border-white/20">
                     <h5 className="font-semibold text-sm mb-2 text-white/90">AI Verdict:</h5>
-                    <p className="text-xs leading-relaxed text-white/80">
-                      {analysis.aiVerdict || generateAIVerdict(analysis.feasibilityScore, analysis.successProbability, analysis.difficultyLevel)}
-                    </p>
+                    <TypingText 
+                      text={analysis.aiVerdict || generateAIVerdict(analysis.feasibilityScore, analysis.successProbability, analysis.difficultyLevel)}
+                      speed={25}
+                      className="text-sm text-left"
+                    />
                   </div>
                 </div>
               </div>

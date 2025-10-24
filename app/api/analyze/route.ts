@@ -46,7 +46,7 @@ Respond with ONLY valid JSON:
   "detectedDomain": "domain category",
   "requiredExperience": "Beginner" | "Intermediate" | "Advanced",
   "honestRealityCheck": "Direct assessment of feasibility and real challenges",
-  "detailedOverview": "Market, technical, and resource analysis",
+  "TargetedAudience": "Analyze the specific user demographics, professions, or groups who would find this idea valuable. Consider age groups, technical expertise, industry sectors, problem-solving needs, and user behaviors. Be specific rather than generic.",
   "aiVerdict": "Overall recommendation with clear next steps"
 }`,
 
@@ -55,52 +55,49 @@ You are a senior technical consultant providing detailed executive analysis for 
 
 PROJECT TO ANALYZE: "${idea}"
 
-Create an elaborate, structured analysis with exactly these sections up to 300 words:
+Provide a comprehensive analysis focusing on these key areas:
 
-**## Market Reality Assessment**
-- Evaluate if the idea solves a real, clear problem (2-3 sentences)
-- Judge market saturation and competition level (2-3 sentences)
+1. MARKET REALITY ASSESSMENT:
+- Does this solve a real, clear problem?
+- What is the competition and market saturation level?
 
-**## Technical Feasibility Analysis**
-- Assess development complexity and required skills (2-3 sentences)
-- Identify key technical risks and challenges (2-3 sentences)
+2. TECHNICAL FEASIBILITY ANALYSIS:
+- Development complexity and required skills assessment
+- Key technical risks and implementation challenges
 
-**## Success Probability Factors**
-- List 2-3 key strengths using bullet points with **bold labels**:
-  - **Strength 1**: Description
-  - **Strength 2**: Description
-- List 2-3 major challenges using bullet points with **bold labels**:
-  - **Challenge 1**: Description
-  - **Challenge 2**: Description
+3. EXECUTIVE SUMMARY:
+- Overall viability assessment with clear reasoning
+- Recommended next steps and approach
 
-**## Final Verdict**
-- Provide 2-3 sentences with honest recommendation
-
-Format as markdown with proper headings and bullet points.
+IMPORTANT:
+- Be thorough and analytical
+- Focus on business viability and market potential
+- Keep responses clear and professional
+- Avoid special characters that could break JSON
 
 Respond with ONLY valid JSON:
 {
   "feasibilityScore": number (1-10),
-  "difficultyLevel": "Beginner" | "Intermediate" | "Advanced",
+  "difficultyLevel": "Beginner" | "Intermediate" | "Advanced", 
   "estimatedTimeframe": "conservative estimate with buffer",
   "successProbability": number (10-95),
   "detectedDomain": "detailed domain classification",
   "requiredExperience": "Beginner" | "Intermediate" | "Advanced",
-  "honestAiFeedback": "The detailed markdown formatted analysis as specified above",
+  "honestAiFeedback": "Comprehensive executive analysis covering market reality, technical feasibility, and business viability assessment",
   "keyStrengths": {
-    "valueProposition": "unique advantages",
-    "marketFit": "target audience pain points"
+    "valueProposition": "unique advantages and market value",
+    "marketFit": "target audience alignment and problem-solution fit"
   },
   "potentialChallenges": {
-    "technicalRisks": "technology challenges",
-    "usabilityIssues": "user adoption barriers", 
-    "marketRisks": "competition and acquisition challenges"
+    "technicalRisks": "development and technology challenges",
+    "usabilityIssues": "user adoption and interface barriers", 
+    "marketRisks": "competition and market acquisition challenges"
   },
   "techStack": {
-    "frontend": ["appropriate technologies"],
-    "backend": ["scalable solutions"],
-    "database": ["suitable database"],
-    "tools": ["development tools"]
+    "frontend": ["recommended frontend technologies"],
+    "backend": ["scalable backend solutions"],
+    "database": ["appropriate database choice"],
+    "tools": ["essential development tools"]
   }
 }`
     }
@@ -117,11 +114,17 @@ Respond with ONLY valid JSON:
 
     console.log("[DEBUG] Raw AI response:", text.substring(0, 200) + "...")
 
-    // 🚀 3. IMPROVED JSON EXTRACTION
+    // 🚀 3. IMPROVED JSON EXTRACTION WITH CLEANING
     let analysis
     try {
-      // Try to parse the full response first
-      analysis = JSON.parse(text.trim())
+      // Clean the response first
+      let cleanedText = text.trim()
+      
+      // Remove any potential markdown code blocks
+      cleanedText = cleanedText.replace(/```json\s*/g, '').replace(/```\s*/g, '')
+      
+      // Try to parse the cleaned response
+      analysis = JSON.parse(cleanedText)
     } catch (parseError) {
       console.log("[DEBUG] Direct parsing failed, attempting JSON extraction...")
       
@@ -130,13 +133,19 @@ Respond with ONLY valid JSON:
       const jsonEnd = text.lastIndexOf('}')
       
       if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        const jsonString = text.substring(jsonStart, jsonEnd + 1)
-        console.log("[DEBUG] Extracted JSON:", jsonString.substring(0, 200) + "...")
+        let jsonString = text.substring(jsonStart, jsonEnd + 1)
+        
+        // Clean the extracted JSON
+        jsonString = jsonString.replace(/\n\s*\n/g, '\n') // Remove extra newlines
+        jsonString = jsonString.replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+        
+        console.log("[DEBUG] Extracted JSON:", jsonString.substring(0, 300) + "...")
         
         try {
           analysis = JSON.parse(jsonString)
         } catch (extractError) {
           console.error("[DEBUG] JSON extraction also failed:", extractError)
+          console.error("[DEBUG] Problematic JSON substring:", jsonString.substring(Math.max(0, 260-50), 260+50))
           
           // 🚀 4. RETURN ERROR - NO FALLBACK
           return NextResponse.json({ 
