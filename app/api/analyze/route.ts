@@ -41,12 +41,12 @@ Respond with ONLY valid JSON:
 {
   "feasibilityScore": number (1-10),
   "difficultyLevel": "Beginner" | "Intermediate" | "Advanced",
-  "estimatedTimeframe": "realistic estimate with buffer",
   "successProbability": number (10-95),
   "detectedDomain": "domain category",
   "requiredExperience": "Beginner" | "Intermediate" | "Advanced",
   "honestRealityCheck": "Direct assessment of feasibility and real challenges",
   "TargetedAudience": "Analyze the specific user demographics, professions, or groups who would find this idea valuable. Consider age groups, technical expertise, industry sectors, problem-solving needs, and user behaviors. Be specific rather than generic.",
+  "marketDemand": "Assess the current market demand for this solution. Consider market size, existing demand indicators, user pain points, competition level, and potential for growth. Be specific about market opportunity.",
   "aiVerdict": "Overall recommendation with clear next steps"
 }`,
 
@@ -83,15 +83,15 @@ Respond with ONLY valid JSON:
   "successProbability": number (10-95),
   "detectedDomain": "detailed domain classification",
   "requiredExperience": "Beginner" | "Intermediate" | "Advanced",
-  "honestAiFeedback": "Comprehensive executive analysis covering market reality, technical feasibility, and business viability assessment",
+  "honestAiFeedback": "Write a comprehensive executive analysis that covers: 1) Market Reality Assessment - does this solve a real problem and what is the competition level, 2) Technical Feasibility Analysis - development complexity and technical risks, 3) Executive Summary - overall viability with clear reasoning and next steps. Be thorough and analytical, focus on business viability and market potential.",
   "keyStrengths": {
-    "valueProposition": "unique advantages and market value",
-    "marketFit": "target audience alignment and problem-solution fit"
+    "valueProposition": "Identify and describe the unique value proposition and competitive advantages this idea offers",
+    "scalability": "Analyze the scalability potential, growth opportunities, and how well this solution can expand to serve more users"
   },
   "potentialChallenges": {
-    "technicalRisks": "development and technology challenges",
-    "usabilityIssues": "user adoption and interface barriers", 
-    "marketRisks": "competition and market acquisition challenges"
+    "technicalRisks": "Identify specific technical challenges and development risks that need to be addressed",
+    "securityConcerns": "Analyze potential security vulnerabilities, data protection requirements, and privacy considerations", 
+    "marketRisks": "Assess competition threats and market acquisition challenges"
   },
   "techStack": {
     "frontend": ["recommended frontend technologies"],

@@ -458,6 +458,8 @@ export default function AnalysisPage() {
 
       if (response.ok) {
         const rawAnalysisData = await response.json()
+        console.log("[Analysis] Raw API data:", rawAnalysisData)
+        console.log("[Analysis] honestAiFeedback field:", rawAnalysisData.honestAiFeedback)
         console.log("[Analysis] Analysis data received successfully")
         
         // 🔧 Apply validation and fallbacks
@@ -598,7 +600,90 @@ export default function AnalysisPage() {
     }
   }
 
-  // 🔥 STAGE 3: Load Roadmaps Data
+  // � REGENERATE FUNCTIONS
+  const regenerateStage1 = async () => {
+    setLoading(true)
+    try {
+      console.log("[Regenerate] Regenerating Stage 1...")
+      
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea: formData.idea, stage: 'stage1' }),
+      })
+
+      if (response.ok) {
+        const rawAnalysisData = await response.json()
+        console.log("[Regenerate] Stage 1 data regenerated successfully")
+        
+        const validatedAnalysisData = validateAnalysisData(rawAnalysisData)
+        const enhancedAnalysis = {
+          ...validatedAnalysisData,
+          projectTitle: `Project: ${formData.idea.substring(0, 50)}${formData.idea.length > 50 ? "..." : ""}`,
+          projectDescription: formData.idea,
+        }
+
+        setAnalysis(enhancedAnalysis)
+        setStageData(prev => ({ ...prev, stage1: enhancedAnalysis }))
+        
+        console.log("[Regenerate] Stage 1 regenerated successfully!")
+      } else {
+        throw new Error('Failed to regenerate Stage 1')
+      }
+    } catch (error) {
+      console.error("[Regenerate] Stage 1 regeneration failed:", error)
+      alert("Failed to regenerate Stage 1. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const regenerateStage2 = async () => {
+    setLoading(true)
+    try {
+      console.log("[Regenerate] Regenerating Stage 2...")
+      
+      // Regenerate Stage 2 Analysis
+      const analysisResponse = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea: formData.idea, stage: 'stage2' }),
+      })
+
+      let stage2Analysis = null
+      if (analysisResponse.ok) {
+        stage2Analysis = await analysisResponse.json()
+      }
+
+      // Regenerate Stage 2 Content
+      const [quickWins, expertArticles, existingSolutions, repos] = await Promise.all([
+        generateQuickWins(),
+        fetchExpertArticles(),
+        fetchExistingSolutions(),
+        fetchGitHubRepos(analysis?.projectTitle || formData.idea)
+      ])
+
+      setStageData(prev => ({
+        ...prev,
+        stage2: { 
+          quickWins, 
+          expertArticles, 
+          existingSolutions, 
+          githubRepos: repos,
+          analysis: stage2Analysis
+        }
+      }))
+      
+      console.log("[Regenerate] Stage 2 regenerated successfully!")
+    } catch (error) {
+      console.error("[Regenerate] Stage 2 regeneration failed:", error)
+      alert("Failed to regenerate Stage 2. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // �🔥 STAGE 3: Load Roadmaps Data
   const loadStage3Data = async () => {
     try {
       const response = await fetch("/api/stage-data", {
@@ -829,6 +914,20 @@ export default function AnalysisPage() {
               <Edit3 className="w-4 h-4" />
               Edit Prompt
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={regenerateStage1}
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Regenerate
+            </Button>
           </div>
         </div>
 
@@ -976,6 +1075,20 @@ export default function AnalysisPage() {
                   <Edit3 className="w-4 h-4" />
                   Edit Prompt
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={regenerateStage2}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  Regenerate
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -985,7 +1098,7 @@ export default function AnalysisPage() {
               <h4 className="font-bold text-red-600 mb-3">Honest Feedback</h4>
               <div className="text-sm space-y-3">
                 <TypingText 
-                  text={sanitizeMarkdown(analysis.honestAiFeedback)} 
+                  text={sanitizeMarkdown(stageData.stage2?.analysis?.honestAiFeedback || "Analysis feedback not available")} 
                   speed={15}
                   className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-red-600 prose-strong:text-red-700 prose-li:text-gray-700 dark:prose-li:text-gray-300"
                 />
@@ -1000,13 +1113,13 @@ export default function AnalysisPage() {
                   <li className="flex items-start gap-2">
                     <span className="text-green-500 font-bold">✓</span>
                     <div>
-                      <strong>Value Proposition:</strong> {analysis.keyStrengths?.valueProposition}
+                      <strong>Value Proposition:</strong> {stageData.stage2?.analysis?.keyStrengths?.valueProposition || "Value proposition assessment needed"}
                     </div>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-green-500 font-bold">✓</span>
                     <div>
-                      <strong>Market Fit:</strong> {analysis.keyStrengths?.marketFit}
+                      <strong>Scalability:</strong> {stageData.stage2?.analysis?.keyStrengths?.scalability || "Scalability analysis needed"}
                     </div>
                   </li>
                 </ul>
@@ -1018,13 +1131,13 @@ export default function AnalysisPage() {
                   <li className="flex items-start gap-2">
                     <span className="text-yellow-500 font-bold">⚠</span>
                     <div>
-                      <strong>Technical:</strong> {analysis.potentialChallenges?.technicalRisks}
+                      <strong>Technical:</strong> {stageData.stage2?.analysis?.potentialChallenges?.technicalRisks || "Technical risk assessment needed"}
                     </div>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-yellow-500 font-bold">⚠</span>
                     <div>
-                      <strong>Market:</strong> {analysis.potentialChallenges?.marketRisks}
+                      <strong>Security:</strong> {stageData.stage2?.analysis?.potentialChallenges?.securityConcerns || "Security analysis needed"}
                     </div>
                   </li>
                 </ul>
@@ -1038,8 +1151,14 @@ export default function AnalysisPage() {
                   <Target className="w-4 h-4" />
                   Target Users & Market
                 </h4>
-                <p className="text-sm mb-2"><strong>Primary Users:</strong> {analysis.targetUsersMarketFit?.primaryUsers}</p>
-                <p className="text-sm"><strong>Market Demand:</strong> {analysis.targetUsersMarketFit?.marketDemand}</p>
+                <p className="text-sm mb-2"><strong>Primary Users:</strong> {stageData.stage1?.TargetedAudience || analysis?.TargetedAudience || "User analysis needed"}</p>
+                <p className="text-sm"><strong>Market Demand:</strong> {
+                  stageData.stage1?.marketDemand || 
+                  analysis?.marketDemand || 
+                  (stageData.stage1?.detectedDomain ? `Growing demand in ${stageData.stage1.detectedDomain} sector` : 
+                   analysis?.detectedDomain ? `Growing demand in ${analysis.detectedDomain} sector` : 
+                   "Market demand assessment needed")
+                }</p>
               </div>
 
               <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/30">
@@ -1806,13 +1925,33 @@ export default function AnalysisPage() {
     return [
       {
         title: "Start with MVP",
-        description: "Focus on core features first to validate the concept",
+        description: "Focus on core features first to validate the concept quickly (1-2 weeks)",
         timeEstimate: "1-2 weeks"
       },
       {
         title: "User Research",
-        description: "Conduct interviews with 5-10 potential users",
+        description: "Conduct interviews with 5-10 potential users to validate assumptions (3-5 days)",
         timeEstimate: "3-5 days"
+      },
+      {
+        title: "💡 Pro Tip: Landing Page",
+        description: "Create a simple landing page to gauge interest and collect early signups before building",
+        timeEstimate: "2-3 days"
+      },
+      {
+        title: "🚀 Quick Win: No-Code Prototype",
+        description: "Use tools like Figma + InVision or Bubble to create an interactive prototype without coding",
+        timeEstimate: "1 week"
+      },
+      {
+        title: "🎯 Bonus Idea: Community Building",
+        description: "Start building a community around your idea on Discord/Slack to get early feedback and beta testers",
+        timeEstimate: "Ongoing"
+      },
+      {
+        title: "📊 Growth Hack: Analytics Setup",
+        description: "Set up Google Analytics and user behavior tracking from day one to understand user patterns",
+        timeEstimate: "1 day"
       }
     ]
   }
