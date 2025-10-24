@@ -454,7 +454,7 @@ export default function AnalysisPage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea: formData.idea }),
+        body: JSON.stringify({ idea: formData.idea, stage: 'stage1' }),
       })
 
       console.log("[Analysis] API response status:", response.status)
@@ -533,6 +533,19 @@ export default function AnalysisPage() {
   // 🔥 STAGE 2: Load Executive Summary Data
   const loadStage2Data = async () => {
     try {
+      // 🚀 Get Stage 2 Analysis Data  
+      const analysisResponse = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idea: formData.idea, stage: 'stage2' }),
+      })
+
+      let stage2Analysis = null
+      if (analysisResponse.ok) {
+        stage2Analysis = await analysisResponse.json()
+      }
+
+      // 🚀 Get Stage 2 Content Data
       const response = await fetch("/api/stage-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -545,7 +558,11 @@ export default function AnalysisPage() {
         
         setStageData(prev => ({
           ...prev,
-          stage2: { ...data, githubRepos: repos }
+          stage2: { 
+            ...data, 
+            githubRepos: repos,
+            analysis: stage2Analysis // Add stage2-specific analysis
+          }
         }))
       } else {
         // Fallback to local generation
@@ -558,7 +575,13 @@ export default function AnalysisPage() {
 
         setStageData(prev => ({
           ...prev,
-          stage2: { quickWins, expertArticles, existingSolutions, githubRepos: repos }
+          stage2: { 
+            quickWins, 
+            expertArticles, 
+            existingSolutions, 
+            githubRepos: repos,
+            analysis: stage2Analysis // Add stage2-specific analysis even in fallback
+          }
         }))
       }
     } catch (error) {
@@ -845,13 +868,7 @@ export default function AnalysisPage() {
               })()}
             </div>
 
-            {/* AI Verdict */}
-            <div className="space-y-3">
-              <h4 className="text-xl font-semibold">AI Verdict:</h4>
-              <p className="text-muted-foreground text-base leading-relaxed">
-                {generateAIVerdict(analysis.feasibilityScore, analysis.successProbability, analysis.difficultyLevel)}
-              </p>
-            </div>
+
 
             {/* Three Metric Boxes - Matching wireframe layout */}
             <div className="space-y-6">
@@ -880,7 +897,7 @@ export default function AnalysisPage() {
             </div>
           </div>
 
-          {/* RIGHT SIDE - Honest Reality Check */}
+          {/* Honest Reality Check */}
           <div className="flex items-center justify-center">
             <div className={`p-8 rounded-xl w-full min-h-[500px] flex flex-col ${getRealityCheckColor(analysis.feasibilityScore)}`}>
               <div className="space-y-6 h-full">
@@ -889,12 +906,20 @@ export default function AnalysisPage() {
                   Honest Reality Check
                 </h4>
                 
-                <div className="flex-1 flex flex-col justify-center max-w-md mx-auto">
+                <div className="flex-1 flex flex-col justify-center max-w-md mx-auto space-y-4">
                   <TypingText 
-                    text={analysis.honestAiFeedback}
+                    text={analysis.honestRealityCheck || analysis.honestAiFeedback}
                     speed={25}
                     className="text-sm text-left"
                   />
+                  
+                  {/* AI Verdict within Honest Reality Check */}
+                  <div className="mt-6 pt-4 border-t border-white/20">
+                    <h5 className="font-semibold text-sm mb-2 text-white/90">AI Verdict:</h5>
+                    <p className="text-xs leading-relaxed text-white/80">
+                      {analysis.aiVerdict || generateAIVerdict(analysis.feasibilityScore, analysis.successProbability, analysis.difficultyLevel)}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1617,6 +1642,7 @@ export default function AnalysisPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea: `${projectModifications.title}: ${projectModifications.description}`,
+          stage: 'stage2'
         }),
       })
 
