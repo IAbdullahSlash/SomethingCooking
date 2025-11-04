@@ -1152,7 +1152,7 @@ export default function AnalysisPage() {
                   Target Users & Market
                 </h4>
                 <p className="text-sm mb-2"><strong>Primary Users:</strong> {stageData.stage1?.TargetedAudience || analysis?.TargetedAudience || "User analysis needed"}</p>
-                <p className="text-sm"><strong>Market Demand:</strong> {
+                    <p className="text-sm"><strong>Market Demand:</strong> {
                   stageData.stage1?.marketDemand || 
                   analysis?.marketDemand || 
                   (stageData.stage1?.detectedDomain ? `Growing demand in ${stageData.stage1.detectedDomain} sector` : 
@@ -2024,19 +2024,32 @@ export default function AnalysisPage() {
   }
 
   const fetchExistingSolutions = async (): Promise<ExistingSolution[]> => {
-    if (!analysis) return []
+    try {
+      // Simple Google Search - just search the user's idea
+      const response = await fetch('/api/google-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          idea: formData.idea || analysis?.projectDescription || analysis?.projectTitle
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log("[Google Search] Found existing solutions:", data.existingSolutions?.length || 0)
+        return data.existingSolutions || []
+      }
+    } catch (error) {
+      console.error('[Google Search] Error:', error)
+    }
+
+    // Simple fallback
     return [
       {
-        name: "Similar Platform A",
-        url: "https://example.com/platform-a",
-        description: "Popular solution in the same domain",
-        category: "Direct Competitor"
-      },
-      {
-        name: "Related Tool B",
-        url: "https://example.com/tool-b",
-        description: "Complementary tool that addresses similar needs",
-        category: "Indirect Competitor"
+        name: "Search Error",
+        url: "#",
+        description: "Unable to fetch search results at this time",
+        category: "Error"
       }
     ]
   }
