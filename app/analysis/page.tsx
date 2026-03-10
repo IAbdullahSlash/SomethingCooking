@@ -683,6 +683,31 @@ export default function AnalysisPage() {
     }
   }
 
+  const regenerateStage3 = async () => {
+    setLoading(true)
+    try {
+      console.log("[Regenerate] Regenerating Stage 3...")
+      
+      // Regenerate Stage 3 Data
+      const projectMilestones = generateProjectMilestones()
+      const teamRoles = generateTeamRoles()
+      const sdlcMapping = generateSDLCMapping()
+      const qaApproach = generateQAApproach()
+
+      setStageData(prev => ({
+        ...prev,
+        stage3: { projectMilestones, teamRoles, sdlcMapping, qaApproach }
+      }))
+      
+      console.log("[Regenerate] Stage 3 regenerated successfully!")
+    } catch (error) {
+      console.error("[Regenerate] Stage 3 regeneration failed:", error)
+      alert("Failed to regenerate Stage 3. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // �🔥 STAGE 3: Load Roadmaps Data
   const loadStage3Data = async () => {
     try {
@@ -1292,6 +1317,20 @@ export default function AnalysisPage() {
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit Prompt
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={regenerateStage3}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  Regenerate
                 </Button>
               </div>
             </div>
@@ -2055,51 +2094,184 @@ export default function AnalysisPage() {
   }
 
   const generateProjectMilestones = (): ProjectMilestone[] => {
+    const ideaText = formData.idea || analysis?.projectDescription || ""
+    const isApp = ideaText.toLowerCase().includes('app') || ideaText.toLowerCase().includes('mobile')
+    const isWeb = ideaText.toLowerCase().includes('web') || ideaText.toLowerCase().includes('website')
+    const isAI = ideaText.toLowerCase().includes('ai') || ideaText.toLowerCase().includes('machine learning')
+    
+    const baseDeliverables = {
+      initiation: ["Project charter", "Stakeholder analysis", "Initial requirements", "Market research"],
+      planning: ["Detailed requirements", "Technical architecture", "UI/UX design", "Development plan"],
+      execution: ["MVP development", "Core features", "Testing & QA", "Beta user feedback"],
+      launch: ["Production deployment", "User onboarding", "Marketing launch", "Performance monitoring"]
+    }
+
+    // Customize deliverables based on project type
+    if (isApp) {
+      baseDeliverables.planning.push("Mobile app wireframes", "App store requirements")
+      baseDeliverables.execution.push("App store submission", "Device testing")
+    }
+    
+    if (isWeb) {
+      baseDeliverables.planning.push("Web hosting setup", "SEO strategy")
+      baseDeliverables.execution.push("Responsive design", "Browser compatibility testing")
+    }
+    
+    if (isAI) {
+      baseDeliverables.planning.push("Data collection strategy", "Model architecture design")
+      baseDeliverables.execution.push("Model training", "Performance optimization")
+    }
+
     return [
       {
-        phase: "Initiation",
-        deliverables: ["Project charter", "Stakeholder analysis", "Initial requirements"],
+        phase: "Project Initiation",
+        deliverables: baseDeliverables.initiation,
         duration: "1-2 weeks",
         dependencies: []
       },
       {
-        phase: "Planning",
-        deliverables: ["Detailed requirements", "Technical design", "Project plan"],
-        duration: "2-3 weeks",
-        dependencies: ["Initiation"]
+        phase: "Planning & Design",
+        deliverables: baseDeliverables.planning,
+        duration: "2-4 weeks",
+        dependencies: ["Project Initiation"]
       },
       {
-        phase: "Execution",
-        deliverables: ["MVP development", "Testing", "User feedback"],
-        duration: "6-8 weeks",
-        dependencies: ["Planning"]
+        phase: "Development & Testing",
+        deliverables: baseDeliverables.execution,
+        duration: "6-10 weeks",
+        dependencies: ["Planning & Design"]
+      },
+      {
+        phase: "Launch & Deployment",
+        deliverables: baseDeliverables.launch,
+        duration: "1-2 weeks",
+        dependencies: ["Development & Testing"]
       }
     ]
   }
 
   const generateTeamRoles = (): TeamRole[] => {
-    return [
+    const ideaText = formData.idea || analysis?.projectDescription || ""
+    const isApp = ideaText.toLowerCase().includes('app') || ideaText.toLowerCase().includes('mobile')
+    const isWeb = ideaText.toLowerCase().includes('web') || ideaText.toLowerCase().includes('website')
+    const isAI = ideaText.toLowerCase().includes('ai') || ideaText.toLowerCase().includes('machine learning')
+    const isEcommerce = ideaText.toLowerCase().includes('ecommerce') || ideaText.toLowerCase().includes('marketplace') || ideaText.toLowerCase().includes('shop')
+    
+    const baseRoles = [
+      {
+        role: "Project Manager",
+        fteEstimate: 0.5,
+        skills: ["Agile", "Stakeholder management", "Risk assessment"],
+        description: "Oversees project timeline, coordinates team, manages stakeholders"
+      },
       {
         role: "Frontend Developer",
         fteEstimate: 1,
-        skills: ["React", "TypeScript", "CSS"],
-        description: "Responsible for user interface development"
+        skills: ["React", "TypeScript", "CSS", "Responsive design"],
+        description: "Responsible for user interface and user experience development"
       },
       {
         role: "Backend Developer",
         fteEstimate: 1,
-        skills: ["Node.js", "Database design", "API development"],
-        description: "Handles server-side logic and database"
+        skills: ["Node.js", "Database design", "API development", "Security"],
+        description: "Handles server-side logic, database, and API development"
+      },
+      {
+        role: "UI/UX Designer",
+        fteEstimate: 0.5,
+        skills: ["Figma", "User research", "Prototyping", "Design systems"],
+        description: "Creates user-centered designs and ensures optimal user experience"
       }
     ]
+
+    // Add specialized roles based on project type
+    if (isApp) {
+      baseRoles.push({
+        role: "Mobile Developer",
+        fteEstimate: 1,
+        skills: ["React Native", "iOS/Android", "App Store deployment"],
+        description: "Specializes in mobile app development and platform-specific features"
+      })
+    }
+    
+    if (isAI) {
+      baseRoles.push({
+        role: "ML Engineer",
+        fteEstimate: 1,
+        skills: ["Python", "TensorFlow", "Data preprocessing", "Model optimization"],
+        description: "Develops and optimizes machine learning models and algorithms"
+      })
+    }
+    
+    if (isEcommerce) {
+      baseRoles.push({
+        role: "E-commerce Specialist",
+        fteEstimate: 0.5,
+        skills: ["Payment integration", "Inventory management", "Analytics"],
+        description: "Handles e-commerce specific features and business logic"
+      })
+    }
+
+    // Always add QA role for larger projects
+    baseRoles.push({
+      role: "QA Engineer",
+      fteEstimate: 0.5,
+      skills: ["Test automation", "Manual testing", "Bug tracking", "Performance testing"],
+      description: "Ensures product quality through comprehensive testing strategies"
+    })
+
+    return baseRoles
   }
 
   const generateSDLCMapping = (): string => {
-    return "Agile methodology with 2-week sprints, continuous integration, and regular stakeholder feedback"
+    const ideaText = formData.idea || analysis?.projectDescription || ""
+    const isComplex = ideaText.toLowerCase().includes('ai') || ideaText.toLowerCase().includes('enterprise') || ideaText.toLowerCase().includes('large scale')
+    const isStartup = ideaText.toLowerCase().includes('startup') || ideaText.toLowerCase().includes('mvp') || ideaText.toLowerCase().includes('prototype')
+    
+    if (isComplex) {
+      return "Hybrid Agile-Waterfall approach with 3-week sprints, detailed documentation requirements, comprehensive testing phases, and milestone-based reviews for complex system integration"
+    }
+    
+    if (isStartup) {
+      return "Lean Startup methodology with rapid prototyping, 1-week sprints, continuous user feedback, pivot-ready architecture, and MVP-focused development cycles"
+    }
+    
+    return "Agile Scrum methodology with 2-week sprints, daily standups, sprint retrospectives, continuous integration, and regular stakeholder demonstrations"
   }
 
   const generateQAApproach = (): string => {
-    return "Automated testing with Jest/Cypress, manual testing for UX, and staged deployment with rollback capabilities"
+    const ideaText = formData.idea || analysis?.projectDescription || ""
+    const isApp = ideaText.toLowerCase().includes('app') || ideaText.toLowerCase().includes('mobile')
+    const isAI = ideaText.toLowerCase().includes('ai') || ideaText.toLowerCase().includes('machine learning')
+    const isEcommerce = ideaText.toLowerCase().includes('ecommerce') || ideaText.toLowerCase().includes('payment')
+    
+    let qaApproach = "Comprehensive testing strategy including:\n"
+    
+    qaApproach += "• Unit testing with Jest/Vitest for component-level validation\n"
+    qaApproach += "• Integration testing for API and database interactions\n"
+    qaApproach += "• End-to-end testing with Playwright/Cypress for user workflows\n"
+    
+    if (isApp) {
+      qaApproach += "• Mobile device testing across iOS and Android platforms\n"
+      qaApproach += "• App store validation and submission testing\n"
+    }
+    
+    if (isAI) {
+      qaApproach += "• Model accuracy validation and performance benchmarking\n"
+      qaApproach += "• Data quality testing and bias detection\n"
+    }
+    
+    if (isEcommerce) {
+      qaApproach += "• Payment gateway testing and security validation\n"
+      qaApproach += "• Load testing for high-traffic scenarios\n"
+    }
+    
+    qaApproach += "• Security testing and vulnerability assessments\n"
+    qaApproach += "• Performance testing and optimization\n"
+    qaApproach += "• User acceptance testing with beta user group\n"
+    qaApproach += "• Staged deployment with blue-green deployment strategy"
+    
+    return qaApproach
   }
 
   const generateTechRoadmap = (): TechRoadmapItem[] => {
